@@ -24,6 +24,8 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     compileOnly ("jakarta.platform:jakarta.jakartaee-api:10.0.0")
+    implementation ("com.opencsv:opencsv:5.7.1")
+    implementation ("org.jboss.resteasy:resteasy-multipart-provider:6.0.1.Final")
 }
 
 

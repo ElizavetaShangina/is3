@@ -1,42 +1,57 @@
 package organization.service;
 
 
-import jakarta.enterprise.context.ApplicationScoped;
+//import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
+//import jakarta.transaction.Transactional;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.NoResultException;
 import jakarta.validation.ValidationException;
 import lombok.NoArgsConstructor;
 import organization.dto.*;
 import organization.entity.*;
+import organization.exception.UniqueConstraintViolationException;
 import organization.mapper.OrganizationMapper;
 import organization.repository.OrganizationRepository;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.NoResultException;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@ApplicationScoped
+//@ApplicationScoped
+@Stateless
 @NoArgsConstructor
 public class OrganizationService {
 
     @Inject
     private OrganizationRepository organizationRepository;
 
-    @Transactional
+    @PersistenceContext
+    private EntityManager em;
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public OrganizationResponseDTO getOrganizationWithMaxFullName() {
         return OrganizationMapper.toOrganizationResponseDTO(organizationRepository.getOrganizationWithMaxFullName());
     }
 
-    @Transactional
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public long countByPostalAddress(AddressRequestDTO postalAddress) {
         return organizationRepository.countByPostalAddress(OrganizationMapper.toAddress(postalAddress));
     }
 
-    @Transactional
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public long countByTypeLessThan(OrganizationTypeDTO type) {
         return organizationRepository.countByTypeLessThan(OrganizationMapper.toOrganizationType(type));
     }
 
-    @Transactional
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public OrganizationResponseDTO mergeOrganizations(OrganizationMergeRequestDTO dto) {
         Organization org1 = organizationRepository.findById(dto.getOrgId1());
         Organization org2 = organizationRepository.findById(dto.getOrgId2());
@@ -55,7 +70,7 @@ public class OrganizationService {
         return OrganizationMapper.toOrganizationResponseDTO(org1);
     }
 
-    @Transactional
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public OrganizationResponseDTO absorbOrganization(OrganizationAbsorbRequestDTO dto) {
         Organization absorber = organizationRepository.findById(dto.getOrgId1());
         Organization absorbed = organizationRepository.findById(dto.getOrgId2());
@@ -75,33 +90,50 @@ public class OrganizationService {
         return OrganizationMapper.toOrganizationResponseDTO(updatedAbsorber);
     }
 
-    @Transactional
+    // Обновить в organization/service/OrganizationService.java
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED) // Или @Transactional, если оставили CDI
+    public OrganizationResponseDTO createOrganization(OrganizationRequestDTO organizationDTO) {
+        Organization org = OrganizationMapper.toOrganization(organizationDTO);
+
+        // 1. ПРОВЕРКА ПРОГРАММНОЙ УНИКАЛЬНОСТИ
+        checkProgrammaticUniqueness(org.getName(), org.getType()); // <-- ДОБАВИТЬ
+
+        // 2. Валидация
+        validateOrganization(org);
+
+        // 3. Сохранение
+        organizationRepository.create(org);
+        return OrganizationMapper.toOrganizationResponseDTO(org);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public OrganizationResponseDTO getOrganizationById(Long id) {
         return OrganizationMapper.toOrganizationResponseDTO(organizationRepository.findById(id));
     }
-    @Transactional
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public List<OrganizationResponseDTO> getAllOrganizations() {
         return organizationRepository.findAll()
                 .stream()
                 .map(OrganizationMapper::toOrganizationResponseDTO)
                 .collect(Collectors.toList());
     }
-    @Transactional
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void deleteOrganization(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("ID не может быть null");
         }
         organizationRepository.deleteById(id);
     }
-    @Transactional
-    public OrganizationResponseDTO createOrganization(OrganizationRequestDTO organization) {
-        Organization org = OrganizationMapper.toOrganization(organization);
-        validateOrganization(org);
-        organizationRepository.create(org);
-        return OrganizationMapper.toOrganizationResponseDTO(org);
-    }
+//    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+//    public OrganizationResponseDTO createOrganization(OrganizationRequestDTO organization) {
+//        Organization org = OrganizationMapper.toOrganization(organization);
+//        validateOrganization(org);
+//        organizationRepository.create(org);
+//        return OrganizationMapper.toOrganizationResponseDTO(org);
+//    }
 
-    @Transactional
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void updateOrganization(Long organizationId, OrganizationResponseDTO organizationDTO) {
         Organization organization = OrganizationMapper.toOrganization(organizationDTO);
         validateOrganization(organization);
@@ -147,6 +179,28 @@ public class OrganizationService {
     private void validateAddress(Address address, String addressType) {
         if (address.getStreet() == null || address.getStreet().trim().isEmpty()) {
             throw new ValidationException(addressType + " street не может быть пустым");
+        }
+    }
+
+    // Добавить в organization/service/OrganizationService.java
+
+    private void checkProgrammaticUniqueness(String title, OrganizationType type) {
+        try {
+            // Проверяем, существует ли уже организация с таким Name и Type.
+            // Используем LockModeType.PESSIMISTIC_WRITE для блокировки от гонки данных.
+            em.createQuery("SELECT o FROM Organization o WHERE o.name = :name AND o.type = :type", Organization.class)
+                    .setParameter("name", title)
+                    .setParameter("type", type)
+                    .setLockMode(LockModeType.PESSIMISTIC_WRITE) // Применяет LOCK в БД
+                    .getSingleResult();
+
+            // Если объект найден, выбрасываем исключение
+            throw new UniqueConstraintViolationException(
+                    "Организация с Name='" + title + "' и Organization Type='" + type + "' уже существует."
+            );
+
+        } catch (NoResultException e) {
+            // Все хорошо, объекта нет
         }
     }
 

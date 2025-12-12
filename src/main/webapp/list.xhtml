@@ -13,7 +13,49 @@
 <h:body>
     <h1>Информационная система: Организации</h1>
 
-    <h:form id="mainForm">
+    <h:form id="mainForm" enctype="multipart/form-data">
+
+        <p:messages id="msgs" showDetail="true" autoUpdate="true" closable="true" globalOnly="true"/>
+
+        <!-- ========================================================================================= -->
+        <!-- НОВЫЙ БЛОК: УПРАВЛЕНИЕ ИМПОРТОМ И АУТЕНТИФИКАЦИЯ (ЗАГЛУШКА) -->
+        <!-- ========================================================================================= -->
+
+        <h2>Управление Импортом</h2>
+
+        <!-- Ввод имени пользователя и загрузка истории -->
+        <p:panelGrid columns="3" style="margin-bottom: 10px;">
+            <h:outputText value="Имя пользователя (для импорта/истории):"/>
+            <p:inputText value="#{importManager.username}" required="true" label="Username"/>
+            <p:commandButton value="Загрузить Историю"
+                             action="#{importManager.loadHistory}"
+                             update="@form :mainForm:msgs"/>
+        </p:panelGrid>
+
+        <!-- Блок загрузки CSV -->
+        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 20px;">
+            <h3>Массовое добавление (CSV)</h3>
+            <p:fileUpload value="#{importManager.uploadedFile}"
+                          mode="simple"
+                          skinSimple="true"
+                          label="Выбрать CSV файл"
+                          required="false"
+                          allowTypes="/(\.csv)$/"
+                          style="margin-bottom: 10px;"/>
+
+            <p:commandButton value="Добавить Организации из CSV"
+                             action="#{importManager.upload}"
+                             ajax="true"
+                             update="@form :mainForm:msgs"
+                             onclick="return confirm('Запустить импорт? Операция может занять время.');"/>
+        </div>
+
+        <p:separator/>
+
+        <!-- ========================================================================================= -->
+        <!-- КОНЕЦ НОВОГО БЛОКА: УПРАВЛЕНИЕ ИМПОРТОМ И АУТЕНТИФИКАЦИЯ -->
+        <!-- ========================================================================================= -->
+
         <!-- Фильтр по имени -->
         <label>Фильтр по полному имени (точное совпадение):
             <h:inputText value="#{organizationView.filterFullName}" />
@@ -71,7 +113,7 @@
             <p:column>
                 <f:facet name="header">Действия</f:facet>
                 <h:commandButton value="Просмотр" action="#{organizationView.view(org.id)}">
-                <f:ajax execute="@this" render="modalPanel" oncomplete="showModalObjectInfo(event)" />
+                    <f:ajax execute="@this" render="modalPanel" oncomplete="showModalObjectInfo(event)" />
                 </h:commandButton>
                 <h:commandButton value="Удалить" action="#{organizationView.delete(org.id)}" onclick="return confirm('Удалить?');" />
                 <h:commandButton value="Изменить" action="#{organizationView.edit(org.id)}">
@@ -79,8 +121,52 @@
                 </h:commandButton>
             </p:column>
         </p:dataTable>
-        <p:poll interval="3" listener="#{organizationView.loadAll}" update="mainForm" />
+        <!-- Обновляем только таблицу данных организации, а не всю форму -->
+        <p:poll interval="3" listener="#{organizationView.loadAll}" update="mainDataTable" />
         <br/>
+
+        <!-- ========================================================================================= -->
+        <!-- НОВЫЙ БЛОК: ТАБЛИЦА ИСТОРИИ ИМПОРТА -->
+        <!-- ========================================================================================= -->
+
+        <h2>История Импорта
+            (<h:outputText value="Администратор" rendered="#{importManager.admin}"/>)
+        </h2>
+
+        <p:dataTable value="#{importManager.importHistory}"
+                     var="op"
+                     styleClass="table"
+                     emptyMessage="История импорта не найдена. Введите имя пользователя и нажмите 'Загрузить Историю'.">
+
+            <p:column headerText="ID Операции">
+                <h:outputText value="#{op.id}"/>
+            </p:column>
+
+            <!-- Колонка "Пользователь" видна только администратору -->
+            <p:column headerText="Пользователь" rendered="#{importManager.admin}">
+                <h:outputText value="#{op.user.username}"/>
+            </p:column>
+
+            <p:column headerText="Статус">
+                <h:outputText value="#{op.status}"
+                              style="font-weight: bold; color: #{op.status eq 'SUCCESS' ? 'green' : op.status eq 'FAILURE' ? 'red' : 'orange'};"/>
+            </p:column>
+
+            <p:column headerText="Добавлено Объектов">
+                <h:outputText value="#{op.addedObjectsCount}"/>
+            </p:column>
+
+            <p:column headerText="Время Запуска">
+                <h:outputText value="#{op.startTime}">
+                    <f:convertDateTime pattern="dd.MM.yyyy HH:mm:ss"/>
+                </h:outputText>
+            </p:column>
+
+            <p:column headerText="Сообщение об Ошибке" rendered="#{op.status eq 'FAILURE'}">
+                <h:outputText value="#{op.errorMessage}"/>
+            </p:column>
+        </p:dataTable>
+
     </h:form>
 
     <!-- МОДАЛЬНОЙ ОКНО ПОДРОБНОСТЕЙ ОБ ОРГАНИЗАЦИИ -->
@@ -149,7 +235,7 @@
                                  required="true"
                                  maxlength="1334"
                                  requiredMessage="Полное имя обязательно">
-                    <f:ajax event="blur" render="editFullNameMessage" />
+                        <f:ajax event="blur" render="editFullNameMessage" />
                     </h:inputText>
                     <h:message id="editFullNameMessage" for="editFullName" style="color:red; display:block;" />
 
@@ -160,12 +246,7 @@
                         <f:selectItem itemValue="TRUST" itemLabel="TRUST"/>
                     </h:selectOneMenu>
 
-                   <h:outputLabel value="Рейтинг:" for="editRating"/>
-<!--                    <h:inputText id="editRating" value="#{organizationView.editedOrganization.rating}" required="true" requiredMessage="Рейтинг обязателен"-->
-<!--                                 validatorMessage="Рейтинг должен быть больше 0">-->
-<!--                        <f:validateDoubleRange minimum="0.01"/>-->
-<!--                    </h:inputText>-->
-<!--                    <h:message for="editRating" style="color:red;"/>-->
+                    <h:outputLabel value="Рейтинг:" for="editRating"/>
                     <h:inputText id="editRating" value="#{organizationView.editedOrganization.rating}"
                                  required="true" requiredMessage="Рейтинг обязателен"
                                  validatorMessage="Рейтинг должен быть больше 0">
@@ -214,7 +295,7 @@
                     <h3>Координаты</h3>
                     <h:outputLabel value="X:" for="editCoordX"/>
                     <h:inputText id="editCoordX" value="#{organizationView.editedOrganization.coordinates.x}" required="true" requiredMessage="Координата X обязательна">
-                    <f:ajax event="blur" render="editCoordXMessage" />
+                        <f:ajax event="blur" render="editCoordXMessage" />
                     </h:inputText>
                     <h:message id="editCoordXMessage" for="editCoordX" style="color:red;"/>
 
@@ -236,11 +317,11 @@
                         </h:commandButton>
                         <button type="button" onclick="hideModalChangeInfo()" >Отмена</button>
 
-</div>
-</h:form>
-</div>
-</div>
-</h:panelGroup>
+                    </div>
+                </h:form>
+            </div>
+        </div>
+    </h:panelGroup>
 
     <!-- МОДАЛКА ДОБАВЛЕНИЯ ОРГАНИЗАЦИИ -->
     <!-- МОДАЛКА ДОБАВЛЕНИЯ ОРГАНИЗАЦИИ -->
@@ -631,6 +712,11 @@
         }
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
+        }
+<!--        function closeAddModalAfterAjax(xhr, status, args) {-->
+<!--             if (args &amp;&amp; !args.validationFailed) {-->
+<!--                 closeAddModal(); // Предполагаем, что у вас есть эта функция в modal.js-->
+<!--             }-->
         }
     </script>
 
