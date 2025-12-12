@@ -17,6 +17,7 @@ import organization.exception.UniqueConstraintViolationException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -41,7 +42,7 @@ public class ObjectImportService {
         ImportOperation logEntry = self.createLogEntry(currentUser, ImportStatus.IN_PROGRESS);
         int objectsAdded = 0;
 
-        try (Reader reader = new InputStreamReader(csvData)) {
+        try (Reader reader = new InputStreamReader(csvData, StandardCharsets.UTF_8)) {
 
             // 2. Реальный парсинг CSV с OpenCSV
             List<CsvImportModel> importModels = new CsvToBeanBuilder<CsvImportModel>(reader)

@@ -5,8 +5,8 @@ import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.servlet.http.Part;
 import org.primefaces.model.file.UploadedFile;
+import organization.repository.UserRepository;
 import organization.entity.ImportOperation;
 import organization.entity.User;
 import organization.repository.ImportOperationRepository;
@@ -36,6 +36,7 @@ public class ImportManagerBean implements Serializable {
 
     private String username;
     private UploadedFile uploadedFile;
+
     private List<ImportOperation> importHistory;
     private boolean isAdmin = false;
 
