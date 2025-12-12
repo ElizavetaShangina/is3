@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+<h:head>
+    <title>Специальные операции</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin-bottom: 25px; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        label { display: inline-block; width: 200px; }
+        input, select, button { padding: 5px; margin: 3px; }
+        .result { margin-top: 10px; padding: 10px; background-color: #f0f8ff; }
+    </style>
+</h:head>
+<h:body>
+    <h1>Специальные операции</h1>
+
+    <!-- 1. Организация с максимальным fullName -->
+    <div class="section">
+        <h3>1. Организация с максимальным полным именем</h3>
+        <h:form>
+            <h:commandButton value="Получить" action="#{specialOperationsView.findMaxFullName}" />
+            <h:panelGroup rendered="#{specialOperationsView.maxFullNameOrg != null}" styleClass="result">
+                <p><b>Результат:</b></p>
+                <p>ID: #{specialOperationsView.maxFullNameOrg.id}</p>
+                <p>Имя: #{specialOperationsView.maxFullNameOrg.name}</p>
+                <p>Полное имя: #{specialOperationsView.maxFullNameOrg.fullName}</p>
+                <p>Тип: #{specialOperationsView.maxFullNameOrg.type}</p>
+            </h:panelGroup>
+        </h:form>
+    </div>
+
+    <!-- 2. Подсчёт по postalAddress -->
+    <div class="section">
+        <h3>2. Количество организаций по почтовому адресу</h3>
+        <h:form>
+            <label>Улица:</label>
+            <h:inputText value="#{specialOperationsView.postalStreet}" required="true" />
+            <br/>
+            <label>ZIP-код:</label>
+            <h:inputText value="#{specialOperationsView.postalZipCode}" />
+            <br/>
+            <h:commandButton value="Посчитать" action="#{specialOperationsView.countByPostalAddress}" />
+            <h:panelGroup rendered="#{specialOperationsView.countResult != null}" styleClass="result">
+                <p><b>Результат:</b> #{specialOperationsView.countResult} организаций</p>
+            </h:panelGroup>
+        </h:form>
+    </div>
+
+    <!-- 3. Подсчёт по типу (меньше заданного) -->
+    <div class="section">
+        <h3>3. Количество организаций с типом меньше заданного</h3>
+        <h:form>
+            <label>Тип (исключая и выше):</label>
+            <h:selectOneMenu value="#{specialOperationsView.selectedType}" required="true">
+                <f:selectItem itemValue="COMMERCIAL" itemLabel="COMMERCIAL" />
+                <f:selectItem itemValue="GOVERNMENT" itemLabel="GOVERNMENT" />
+                <f:selectItem itemValue="TRUST" itemLabel="TRUST" />
+            </h:selectOneMenu>
+            <br/>
+            <h:commandButton value="Посчитать" action="#{specialOperationsView.countByTypeLessThan}" />
+            <h:panelGroup rendered="#{specialOperationsView.countResult != null}" styleClass="result">
+                <p><b>Результат:</b> #{specialOperationsView.countResult} организаций</p>
+            </h:panelGroup>
+        </h:form>
+    </div>
+
+    <!-- 4. Объединение организаций -->
+    <div class="section">
+        <h3>4. Объединить две организации</h3>
+        <h:form>
+            <label>ID первой организации:</label>
+            <h:inputText value="#{specialOperationsView.mergeOrgId1}" required="true" />
+            <br/>
+            <label>ID второй организации:</label>
+            <h:inputText value="#{specialOperationsView.mergeOrgId2}" required="true" />
+            <br/>
+            <label>Имя новой организации:</label>
+            <h:inputText value="#{specialOperationsView.mergeNewName}" required="true" />
+            <br/>
+            <label>Улица новой организации:</label>
+            <h:inputText value="#{specialOperationsView.mergeNewStreet}" required="true" />
+            <br/>
+            <label>ZIP-код новой организации:</label>
+            <h:inputText value="#{specialOperationsView.mergeNewZipCode}" />
+            <br/>
+            <h:commandButton value="Объединить" action="#{specialOperationsView.mergeOrganizations}" />
+            <h:panelGroup rendered="#{specialOperationsView.mergeResult != null}" styleClass="result">
+                <p><b>Создана новая организация:</b></p>
+                <p>ID: #{specialOperationsView.mergeResult.id}</p>
+                <p>Имя: #{specialOperationsView.mergeResult.name}</p>
+                <p>Сотрудников: #{specialOperationsView.mergeResult.employeesCount}</p>
+            </h:panelGroup>
+        </h:form>
+    </div>
+
+    <!-- 5. Поглощение организации -->
+    <div class="section">
+        <h3>5. Поглотить одну организацию другой</h3>
+        <h:form>
+            <label>ID поглощающей организации:</label>
+            <h:inputText value="#{specialOperationsView.absorbOrgId1}" required="true" />
+            <br/>
+            <label>ID поглощаемой организации:</label>
+            <h:inputText value="#{specialOperationsView.absorbOrgId2}" required="true" />
+            <br/>
+            <h:commandButton value="Поглотить" action="#{specialOperationsView.absorbOrganization}" />
+            <h:panelGroup rendered="#{specialOperationsView.absorbResult != null}" styleClass="result">
+                <p><b>Организация поглощена!</b></p>
+                <p>Обновлённая организация:</p>
+                <p>ID: #{specialOperationsView.absorbResult.id}</p>
+                <p>Сотрудников: #{specialOperationsView.absorbResult.employeesCount}</p>
+            </h:panelGroup>
+        </h:form>
+    </div>
+
+    <h:form>
+        <h:commandButton value="Назад к списку" action="list?faces-redirect=true" />
+    </h:form>
+</h:body>
+</html>

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://java.sun.com/xml/ns/javaee"
+      xmlns:p="http://primefaces.org/ui"
+>
+<h:head>
+    <title>Организации — Управление</title>
+    <h:outputStylesheet library="css" name="styles.css" />
+    <h:outputScript library="js" name="modal.js" target="head" />
+</h:head>
+<h:body>
+    <h1>Информационная система: Организации</h1>
+
+    <h:form id="mainForm">
+        <!-- Фильтр по имени -->
+        <label>Фильтр по полному имени (точное совпадение):
+            <h:inputText value="#{organizationView.filterFullName}" />
+        </label>
+        <h:commandButton value="Применить фильтр (fullName)">
+            <f:ajax execute="@form" render="@form" listener="#{organizationView.applyFullNameFilter}" />
+        </h:commandButton>
+        <h:commandButton value="Снять фильтр">
+            <f:ajax execute="@this" render="@form" listener="#{organizationView.clearFilter}" />
+        </h:commandButton>
+        <br/><br/>
+        <br/>
+        <button type="button" onclick="openModal('maxFullNameModal')">Макс. fullName</button>
+        <button type="button" onclick="openModal('countPostalModal')">Считать по адресу</button>
+        <button type="button" onclick="openModal('countTypeModal')">Считать по типу</button>
+        <button type="button" onclick="openModal('mergeModal')">Объединить</button>
+        <button type="button" onclick="openModal('absorbModal')">Поглотить</button>
+
+
+        <h:commandButton value="Добавить организацию" action="#{organizationView.prepareNewOrganization}">
+            <f:ajax execute="@this" render="modalAddPanel" oncomplete="showAddModal(event)" />
+        </h:commandButton>
+
+        <!-- ТАБЛИЦА ВСЕ ОРГАНИЗАЦИИ -->
+        <p:dataTable value="#{organizationView.organizationsDTO}"
+                     var="org"
+                     id="mainDataTable"
+                     paginator="true"
+                     rows="10"
+                     rowsPerPageTemplate="5,10,15,20"
+                     paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                     paginatorPosition="bottom"
+                     styleClass="table"
+                     emptyMessage="Нет организаций для отображения">
+            <p:column style="width: 60px;">
+                <f:facet name="header">ID</f:facet>
+                #{org.id}
+            </p:column>
+            <p:column style="width: 200px;">
+                <f:facet name="header">Имя</f:facet>
+                #{org.name}
+            </p:column>
+            <p:column style="width: 300px;">
+                <f:facet name="header">Полное имя</f:facet>
+                #{org.fullName}
+            </p:column>
+            <p:column style="width: 100px;">
+                <f:facet name="header">Тип</f:facet>
+                #{org.type}
+            </p:column>
+            <p:column style="width: 200px;">
+                <f:facet name="header">Сотрудников</f:facet>
+                #{org.employeesCount}
+            </p:column>
+            <p:column>
+                <f:facet name="header">Действия</f:facet>
+                <h:commandButton value="Просмотр" action="#{organizationView.view(org.id)}">
+                <f:ajax execute="@this" render="modalPanel" oncomplete="showModalObjectInfo(event)" />
+                </h:commandButton>
+                <h:commandButton value="Удалить" action="#{organizationView.delete(org.id)}" onclick="return confirm('Удалить?');" />
+                <h:commandButton value="Изменить" action="#{organizationView.edit(org.id)}">
+                    <f:ajax execute="@this" render="modalPanelChangeInfo" oncomplete="showModalChangeInfo(event)" />
+                </h:commandButton>
+            </p:column>
+        </p:dataTable>
+        <p:poll interval="3" listener="#{organizationView.loadAll}" update="mainForm" />
+        <br/>
+    </h:form>
+
+    <!-- МОДАЛЬНОЙ ОКНО ПОДРОБНОСТЕЙ ОБ ОРГАНИЗАЦИИ -->
+    <h:panelGroup id="modalPanel">
+        <div id="modal" class="modal" style="#{organizationView.selectedOrganization != null ? 'display:block;' : 'display:none;'}">
+            <div class="modal-content">
+                <h:commandLink action="#{organizationView.resetAllParams}">
+                    <f:ajax render="modalPanel" />
+                    <span class="close" onclick="hideModalObjectInfo()">&#215;</span>
+                </h:commandLink>
+
+                <h2>Информация об организации</h2>
+                <ui:fragment>
+                    <h3>Информация</h3>
+                    <p><b>ID:</b> #{organizationView.selectedOrganization.id}</p>
+                    <p><b>Название:</b> #{organizationView.selectedOrganization.name}</p>
+                    <p><b>Полное имя:</b> #{organizationView.selectedOrganization.fullName}</p>
+                    <p><b>Тип:</b> #{organizationView.selectedOrganization.type}</p>
+                    <p><b>Рейтинг:</b> #{organizationView.selectedOrganization.rating}</p>
+                    <p><b>Сотрудников:</b> #{organizationView.selectedOrganization.employeesCount}</p>
+                    <p><b>Оборот:</b> #{organizationView.selectedOrganization.annualTurnover}</p>
+                    <p><b>Дата создания:</b>
+                        #{organizationView.selectedOrganization.creationDate}</p>
+
+                    <h3>Официальный адрес</h3>
+                    <p><b>Улица:</b> #{organizationView.selectedOrganization.officialAddress.street}</p>
+                    <p><b>Почтовый индекс:</b> #{organizationView.selectedOrganization.officialAddress.zipCode}</p>
+
+                    <h3>Почтовый адрес</h3>
+                    <p><b>Улица:</b> #{organizationView.selectedOrganization.postalAddress.street}</p>
+                    <p><b>Почтовый индекс:</b> #{organizationView.selectedOrganization.postalAddress.zipCode}</p>
+
+                    <h3>Координаты</h3>
+                    <p><b>X:</b> #{organizationView.selectedOrganization.coordinates.x}</p>
+                    <p><b>Y:</b> #{organizationView.selectedOrganization.coordinates.y}</p>
+                </ui:fragment>
+            </div>
+        </div>
+    </h:panelGroup>
+
+    <!-- МОДАЛЬНОЕ ОКНО ИЗМЕНЕНИЯ -->
+    <h:panelGroup id="modalPanelChangeInfo">
+        <div id="modalChangeInfo"
+             class="modal"
+             style="#{organizationView.editedOrganization != null ? 'display:block;' : 'display:none;'}">
+
+            <div class="modal-content">
+                <h:commandLink action="#{organizationView.resetAllParams}">
+                    <f:ajax render="modalChangeInfo" />
+                    <span class="close" onclick="hideModalChangeInfo()">&#215;</span>
+                </h:commandLink>
+                <h2>Изменение информации об организации</h2>
+
+                <h:form id="editForm" prependId="false">
+                    <h:inputHidden value="#{organizationView.editedOrganization.id}" />
+                    <p:messages autoUpdate="true" showDetail="true" showSummary="false" />
+
+                    <h3>Основная информация</h3>
+
+                    <h:outputLabel value="Название:" for="editName"/>
+                    <h:inputText id="editName" value="#{organizationView.editedOrganization.name}" required="true"/>
+
+                    <h:outputLabel value="Полное имя:" for="editFullName"/>
+                    <h:inputText id="editFullName"
+                                 value="#{organizationView.editedOrganization.fullName}"
+                                 required="true"
+                                 maxlength="1334"
+                                 requiredMessage="Полное имя обязательно">
+                    <f:ajax event="blur" render="editFullNameMessage" />
+                    </h:inputText>
+                    <h:message id="editFullNameMessage" for="editFullName" style="color:red; display:block;" />
+
+                    <h:outputLabel value="Тип:" for="editType"/>
+                    <h:selectOneMenu id="editType" value="#{organizationView.editedOrganization.type}">
+                        <f:selectItem itemValue="COMMERCIAL" itemLabel="COMMERCIAL"/>
+                        <f:selectItem itemValue="GOVERNMENT" itemLabel="GOVERNMENT"/>
+                        <f:selectItem itemValue="TRUST" itemLabel="TRUST"/>
+                    </h:selectOneMenu>
+
+                   <h:outputLabel value="Рейтинг:" for="editRating"/>
+<!--                    <h:inputText id="editRating" value="#{organizationView.editedOrganization.rating}" required="true" requiredMessage="Рейтинг обязателен"-->
+<!--                                 validatorMessage="Рейтинг должен быть больше 0">-->
+<!--                        <f:validateDoubleRange minimum="0.01"/>-->
+<!--                    </h:inputText>-->
+<!--                    <h:message for="editRating" style="color:red;"/>-->
+                    <h:inputText id="editRating" value="#{organizationView.editedOrganization.rating}"
+                                 required="true" requiredMessage="Рейтинг обязателен"
+                                 validatorMessage="Рейтинг должен быть больше 0">
+                        <f:validateDoubleRange minimum="0.01"/>
+                        <f:ajax event="blur" render="editRatingMessage" />
+                    </h:inputText>
+                    <h:message id="editRatingMessage" for="editRating" style="color:red;"/>
+
+
+                    <h:outputLabel value="Сотрудников:" for="editEmployeesCount"/>
+                    <h:inputText id="editEmployeesCount" value="#{organizationView.editedOrganization.employeesCount}" required="true" requiredMessage="Данное поле обязательно для заполнения"
+                                 validatorMessage="Количество сотрудников должно быть больше 0">
+                        <f:validateLongRange minimum="1"/>
+                        <f:ajax event="blur" render="editEmployeesCountMessage" />
+                    </h:inputText>
+                    <h:message id="editEmployeesCountMessage" for="editEmployeesCount" style="color:red;"/>
+
+                    <h:outputLabel value="Годовой оборот:" for="editAnnualTurnover"/>
+                    <h:inputText id="editAnnualTurnover" value="#{organizationView.editedOrganization.annualTurnover}" required="true" requiredMessage="Поле 'Годовой оборот' обязательно"
+                                 validatorMessage="Годовой оборот должен быть больше 0">
+                        <f:validateDoubleRange minimum="0.01"/>
+                        <f:ajax event="blur" render="editAnnualTurnoverMessage" />
+                    </h:inputText>
+                    <h:message id="editAnnualTurnoverMessage" for="editAnnualTurnover" style="color:red;"/>
+
+                    <h3>Официальный адрес</h3>
+                    <h:outputLabel value="Улица:" for="editOfficialStreet"/>
+                    <h:inputText id="editOfficialStreet" value="#{organizationView.editedOrganization.officialAddress.street}" required="true" requiredMessage="Официальная улица обязательна">
+                        <f:ajax event="blur" render="editOfficialStreetMessage" />
+                    </h:inputText>
+                    <h:message id="editOfficialStreetMessage" for="editOfficialStreet" style="color:red;"/>
+
+                    <h:outputLabel value="ZIP-код:" for="editOfficialZip"/>
+                    <h:inputText id="editOfficialZip" value="#{organizationView.editedOrganization.officialAddress.zipCode}" />
+
+                    <h3>Почтовый адрес</h3>
+                    <h:outputLabel value="Улица:" for="editPostalStreet"/>
+                    <h:inputText id="editPostalStreet" value="#{organizationView.editedOrganization.postalAddress.street}" required="true" requiredMessage="Почтовый адрес обязателен">
+                        <f:ajax event="blur" render="editPostalStreetMessage" />
+                    </h:inputText>
+                    <h:message id="editPostalStreetMessage" for="editPostalStreet" style="color:red;"/>
+
+                    <h:outputLabel value="ZIP-код:" for="editPostalZip"/>
+                    <h:inputText id="editPostalZip" value="#{organizationView.editedOrganization.postalAddress.zipCode}" />
+
+                    <h3>Координаты</h3>
+                    <h:outputLabel value="X:" for="editCoordX"/>
+                    <h:inputText id="editCoordX" value="#{organizationView.editedOrganization.coordinates.x}" required="true" requiredMessage="Координата X обязательна">
+                    <f:ajax event="blur" render="editCoordXMessage" />
+                    </h:inputText>
+                    <h:message id="editCoordXMessage" for="editCoordX" style="color:red;"/>
+
+                    <h:outputLabel value="Y:" for="editCoordY"/>
+                    <h:inputText id="editCoordY" value="#{organizationView.editedOrganization.coordinates.y}" required="true" requiredMessage="Координата Y обязательна"
+                                 validatorMessage="Y должно быть больше -461">
+                        <f:validateLongRange minimum="-460"/>
+                        <f:ajax event="blur" render="editCoordYMessage" />
+                    </h:inputText>
+
+                    <h:message id="editCoordYMessage" for="editCoordY" style="color:red;"/>
+
+                    <div class="modal-buttons">
+                        <h:commandButton value="Сохранить изменения"
+                                         action="#{organizationView.updateOrganization}">
+                            <f:ajax execute="@form"
+                                    render="mainForm modalPanelChangeInfo editForm"
+                                    onevent="closeModalAfterAjax" />
+                        </h:commandButton>
+                        <button type="button" onclick="hideModalChangeInfo()" >Отмена</button>
+
+</div>
+</h:form>
+</div>
+</div>
+</h:panelGroup>
+
+<!-- МОДАЛКА ДОБАВЛЕНИЯ ОРГАНИЗАЦИИ -->
+    <h:panelGroup id="modalAddPanel">
+        <div id="addModal"
+             class="modal"
+             style="#{organizationView.newOrganizationDTO != null ? 'display:block;' : 'display:none;'}">
+            <div class="modal-content">
+                <h:commandLink action="#{organizationView.resetAllParams}">
+                    <f:ajax render="modalAddPanel" />
+                    <span class="close" onclick="closeAddModal()">&#215;</span>
+                </h:commandLink>
+                <h3>Добавить организацию</h3>
+                <p:messages autoUpdate="true" showDetail="true" showSummary="false" />
+                <h:form id="addForm" prependId="false">
+                    <h:outputLabel for="name" value="Имя:"/>
+                    <h:inputText id="name"
+                                 value="#{organizationView.newOrganizationDTO.name}"
+                                 required="true"
+                                 requiredMessage="Полное имя обязательно"/>
+                    <h:message for="name" style="color:red; display:block;" />
+
+                    <h:outputLabel for="fullName" value="Полное имя:"/>
+                    <h:inputText id="fullName"
+                                 value="#{organizationView.newOrganizationDTO.fullName}"
+                                 required="true"
+                                 maxlength="1334"
+                                 requiredMessage="Полное имя обязательно">
+                    <f:ajax event="blur" render="fullNameMessage" />
+                    </h:inputText>
+                    <h:message id="fullNameMessage" for="fullName" style="color:red; display:block;" />
+
+                    <h:outputLabel for="type" value="Тип:"/>
+                    <h:selectOneMenu id="type"
+                                     value="#{organizationView.newOrganizationDTO.type}"
+                                     required="true"
+                                     requiredMessage="Тип обязателен">
+                        <f:selectItem itemValue="COMMERCIAL" itemLabel="COMMERCIAL" />
+                        <f:selectItem itemValue="GOVERNMENT" itemLabel="GOVERNMENT" />
+                        <f:selectItem itemValue="TRUST" itemLabel="TRUST" />
+                        <f:ajax event="blur" render="typeMessage" />
+                    </h:selectOneMenu>
+
+                    <h:message id="typeMessage" for="type" style="color:red; display:block;" />
+
+                    <h:outputLabel for="employeesCount" value="Сотрудников:"/>
+                    <h:inputText id="employeesCount"
+                                 value="#{organizationView.newOrganizationDTO.employeesCount}"
+                                 required="true"
+                                 requiredMessage="Количество сотрудников обязательно"
+                                 validatorMessage="Должно быть целым числом больше 0">
+                        <f:validateLongRange minimum="1"/>
+                        <f:ajax event="blur" render="employeesCountMessage" />
+                    </h:inputText>
+
+                    <h:message id="employeesCountMessage" for="employeesCount" style="color:red; display:block;" />
+
+                    <h:outputLabel for="annualTurnover" value="Годовой оборот:"/>
+                    <h:inputText id="annualTurnover"
+                                 value="#{organizationView.newOrganizationDTO.annualTurnover}"
+                                 required="true"
+                                 requiredMessage="Годовой оборот обязателен"
+                                 validatorMessage="Должен быть больше 0">
+                        <f:validateDoubleRange minimum="0.01"/>
+                        <f:ajax event="blur" render="annualTurnoverMessage" />
+                    </h:inputText>
+
+                    <h:message id="annualTurnoverMessage" for="annualTurnover" style="color:red; display:block;" />
+
+                    <h:outputLabel for="rating" value="Рейтинг:" />
+                    <h:inputText id="rating"
+                                 value="#{organizationView.newOrganizationDTO.rating}"
+                                 required="true"
+                                 requiredMessage="Рейтинг обязателен"
+                                 validatorMessage="Должен быть больше 0">
+                        <f:validateDoubleRange minimum="0.01"/>
+                        <f:ajax event="blur" render="ratingMessage" />
+                    </h:inputText>
+
+                    <h:message id="ratingMessage" for="rating" style="color:red; display:block;" />
+
+                    <h:outputLabel for="coordX" value="Координата X:" />
+                    <h:inputText id="coordX"
+                                 value="#{organizationView.newOrganizationDTO.coordinates.x}"
+                                 required="true"
+                                 requiredMessage="Координата X обязательна">
+                    <f:ajax event="blur" render="coordXMessage" />
+                    </h:inputText>
+                    <h:message id="coordXMessage" for="coordX" style="color:red; display:block;" />
+
+                    <h:outputLabel for="coordY" value="Координата Y:" />
+                    <h:inputText id="coordY"
+                                 value="#{organizationView.newOrganizationDTO.coordinates.y}"
+                                 required="true"
+                                 requiredMessage="Координата Y обязательна"
+                                 validatorMessage="Должна быть больше -461">
+                        <f:validateLongRange minimum="-460"/>
+                        <f:ajax event="blur" render="coordYMessage" />
+                    </h:inputText>
+
+                    <h:message id="coordYMessage" for="coordY" style="color:red; display:block;" />
+
+                    <h:outputLabel for="officialStreet" value="Официальная улица:" />
+                    <h:inputText id="officialStreet"
+                                 value="#{organizationView.newOrganizationDTO.officialAddress.street}"
+                                 required="true"
+                                 requiredMessage="Официальная улица обязательна">
+                    <f:ajax event="blur" render="officialStreetMessage" />
+                    </h:inputText>
+                    <h:message id="officialStreetMessage" for="officialStreet" style="color:red; display:block;" />
+
+                    <h:outputLabel for="officialZipCode" value="Zip-код:" />
+                    <h:inputText id="officialZipCode" value="#{organizationView.newOrganizationDTO.officialAddress.zipCode}" />
+
+                    <h:outputLabel for="postalStreet" value="Почтовая улица:" />
+                    <h:inputText id="postalStreet"
+                                 value="#{organizationView.newOrganizationDTO.postalAddress.street}"
+                                 required="true"
+                                 requiredMessage="Почтовая улица обязательна">
+                    <f:ajax event="blur" render="postalStreetMessage" />
+                    </h:inputText>
+                    <h:message id="postalStreetMessage" for="postalStreet" style="color:red; display:block;" />
+
+                    <h:outputLabel for="postalZipCode" value="Почтовый Zip-код:" />
+                    <h:inputText id="postalZipCode"
+                                 value="#{organizationView.newOrganizationDTO.postalAddress.zipCode}"
+                                 required="true"
+                                 requiredMessage="Почтовый Zip-код обязателен">
+                    <f:ajax event="blur" render="postalZipCodeMessage" />
+                    </h:inputText>
+                    <h:message id="postalZipCodeMessage" for="postalZipCode" style="color:red; display:block;" />
+
+                    <div class="modal-buttons">
+                        <h:commandButton value="Сохранить"
+                                         action="#{organizationView.addOrganization}">
+                            <f:ajax execute="@form"
+                                    render="mainForm modalAddPanel addForm"
+                                    onevent="closeAddModalAfterAjax" />
+                        </h:commandButton>
+                        <h:commandButton value="Отмена" action="#{organizationView.resetAllParams}">
+                            <f:ajax render="modalAddPanel" />
+                        </h:commandButton>
+
+<!--                        <button type="button" onclick="closeAddModal()">Отмена</button>-->
+                    </div>
+                </h:form>
+            </div>
+        </div>
+    </h:panelGroup>
+
+
+
+    <!-- МОДАЛКА ФУЛНЭЙМА -->
+    <h:panelGroup id="maxFullNamePanel">
+        <div id="maxFullNameModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('maxFullNameModal')">&#215;</span>
+                <h3>Организация с максимальным полным именем</h3>
+                <h:form prependId="false">
+                    <h:commandButton value="Обновить" action="#{organizationView.findMaxFullName}">
+                        <f:ajax execute="@this" render="maxFullNameResult" />
+                    </h:commandButton>
+                    <h:panelGroup id="maxFullNameResult">
+                        <h:panelGroup rendered="#{organizationView.maxFullNameOrg != null}">
+                            <p><b>Результат:</b></p>
+                            <p>ID: #{organizationView.maxFullNameOrg.id}</p>
+                            <p>Имя: #{organizationView.maxFullNameOrg.name}</p>
+                            <p>Полное имя: #{organizationView.maxFullNameOrg.fullName}</p>
+                            <p>Тип: #{organizationView.maxFullNameOrg.type}</p>
+                        </h:panelGroup>
+                    </h:panelGroup>
+                </h:form>
+            </div>
+        </div>
+    </h:panelGroup>
+
+    <!-- МОДАЛКА ПОЧТА АДРЕС -->
+    <div id="countPostalModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('countPostalModal')">&#215;</span>
+            <h3>Количество по почтовому адресу</h3>
+            <h:form prependId="false">
+                <h:outputLabel value="Улица:" for="postalStreetFilter"/>
+                <h:inputText id="postalStreetFilter"
+                             value="#{organizationView.postalStreet}"
+                             required="true"
+                             requiredMessage="Улица обязательна">
+                    <f:ajax event="blur" render="postalStreetFilterMessage" />
+                </h:inputText>
+                <h:message id="postalStreetFilterMessage" for="postalStreetFilter" style="color:red; display:block;" />
+
+                <br/>
+
+                <h:outputLabel value="ZIP-код:" for="postalZipCodeFilter"/>
+                <h:inputText id="postalZipCodeFilter"
+                             value="#{organizationView.postalZipCode}"
+                             required="true"
+                             requiredMessage="ZIP-код обязателен">
+                    <f:ajax event="blur" render="postalZipCodeFilterMessage" />
+                </h:inputText>
+                <h:message id="postalZipCodeFilterMessage" for="postalZipCodeFilter" style="color:red; display:block;" />
+
+                <br/>
+
+                <h:commandButton value="Посчитать" action="#{organizationView.executeCountByPostalAddress}">
+                    <f:ajax execute="@form" render="countPostalResult postalStreetFilterMessage" />
+                </h:commandButton>
+
+                <h:panelGroup id="countPostalResult">
+                    <h:panelGroup rendered="#{organizationView.countByPostalAddressResult != null}">
+                        <p><b>Результат:</b> #{organizationView.countByPostalAddressResult}</p>
+                    </h:panelGroup>
+                </h:panelGroup>
+            </h:form>
+        </div>
+    </div>
+    <!-- 3. Модальное окно: Подсчёт по типу -->
+    <div id="countTypeModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('countTypeModal')">&#215;</span>
+            <h3>Количество с типом меньше заданного</h3>
+            <h:form prependId="false">
+                <h:outputLabel value="Тип:" for="selectedType"/>
+                <h:selectOneMenu id="selectedType"
+                                 value="#{organizationView.selectedType}"
+                                 required="true"
+                                 requiredMessage="Тип обязателен">
+                    <f:selectItem itemValue="COMMERCIAL" itemLabel="COMMERCIAL" />
+                    <f:selectItem itemValue="GOVERNMENT" itemLabel="GOVERNMENT" />
+                    <f:selectItem itemValue="TRUST" itemLabel="TRUST" />
+                    <f:ajax event="change" render="selectedTypeMessage" />
+                </h:selectOneMenu>
+                <h:message id="selectedTypeMessage" for="selectedType" style="color:red; display:block;" />
+
+                <br/>
+                <h:commandButton value="Посчитать" action="#{organizationView.executeCountByTypeLessThan}">
+                    <f:ajax execute="@form" render="countTypeResult selectedTypeMessage" />
+                </h:commandButton>
+
+                <h:panelGroup id="countTypeResult">
+                    <h:panelGroup rendered="#{organizationView.countByTypeResult != null}">
+                        <p><b>Результат:</b> #{organizationView.countByTypeResult} организаций</p>
+                    </h:panelGroup>
+                </h:panelGroup>
+            </h:form>
+        </div>
+    </div>
+
+    <!-- 4. Модальное окно: Объединение -->
+    <div id="mergeModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('mergeModal')">&#215;</span>
+            <h3>Объединить организации</h3>
+            <h:form prependId="false">
+                <h:outputLabel value="ID первой:" for="mergeOrgId1"/>
+                <h:inputText id="mergeOrgId1"
+                             value="#{organizationView.mergeOrgId1}"
+                             required="true"
+                             requiredMessage="ID первой организации обязателен">
+                    <f:ajax event="blur" render="mergeOrgId1Message" />
+                </h:inputText>
+                <h:message id="mergeOrgId1Message" for="mergeOrgId1" style="color:red; display:block;" />
+
+                <br/>
+                <h:outputLabel value="ID второй:" for="mergeOrgId2"/>
+                <h:inputText id="mergeOrgId2"
+                             value="#{organizationView.mergeOrgId2}"
+                             required="true"
+                             requiredMessage="ID второй организации обязателен">
+                    <f:ajax event="blur" render="mergeOrgId2Message" />
+                </h:inputText>
+                <h:message id="mergeOrgId2Message" for="mergeOrgId2" style="color:red; display:block;" />
+
+                <br/>
+                <h:outputLabel value="Имя новой:" for="mergeNewName"/>
+                <h:inputText id="mergeNewName"
+                             value="#{organizationView.mergeNewName}"
+                             required="true"
+                             requiredMessage="Имя новой организации обязательно">
+                    <f:ajax event="blur" render="mergeNewNameMessage" />
+                </h:inputText>
+                <h:message id="mergeNewNameMessage" for="mergeNewName" style="color:red; display:block;" />
+
+                <br/>
+                <h:outputLabel value="Улица новой:" for="mergeNewStreet"/>
+                <h:inputText id="mergeNewStreet"
+                             value="#{organizationView.mergeNewStreet}"
+                             required="true"
+                             requiredMessage="Улица обязательна">
+                    <f:ajax event="blur" render="mergeNewStreetMessage" />
+                </h:inputText>
+                <h:message id="mergeNewStreetMessage" for="mergeNewStreet" style="color:red; display:block;" />
+
+                <br/>
+                <h:outputLabel value="ZIP-код новой:" for="mergeNewZipCode"/>
+                <h:inputText id="mergeNewZipCode"
+                             value="#{organizationView.mergeNewZipCode}" />
+                <br/>
+
+                <h:commandButton value="Объединить" action="#{organizationView.executeMerge}">
+                    <f:ajax execute="@form" render="mergeResult mergeOrgId1Message mergeOrgId2Message mergeNewNameMessage mergeNewStreetMessage" />
+                </h:commandButton>
+
+                <h:panelGroup id="mergeResult">
+                    <h:panelGroup rendered="#{organizationView.mergeResult != null}">
+                        <p><b>Создана:</b> #{organizationView.mergeResult.name} (ID: #{organizationView.mergeResult.id})</p>
+                    </h:panelGroup>
+                </h:panelGroup>
+            </h:form>
+        </div>
+    </div>
+
+    <!-- 5. Модальное окно: Поглощение -->
+    <div id="absorbModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('absorbModal')">&#215;</span>
+            <h3>Поглотить организацию</h3>
+            <h:form prependId="false">
+                <h:outputLabel value="ID поглощающей:" for="absorbOrgId1"/>
+                <h:inputText id="absorbOrgId1"
+                             value="#{organizationView.absorbOrgId1}"
+                             required="true"
+                             requiredMessage="ID поглощающей организации обязателен">
+                    <f:ajax event="blur" render="absorbOrgId1Message" />
+                </h:inputText>
+                <h:message id="absorbOrgId1Message" for="absorbOrgId1" style="color:red; display:block;" />
+
+                <br/>
+                <h:outputLabel value="ID поглощаемой:" for="absorbOrgId2"/>
+                <h:inputText id="absorbOrgId2"
+                             value="#{organizationView.absorbOrgId2}"
+                             required="true"
+                             requiredMessage="ID поглощаемой организации обязателен">
+                    <f:ajax event="blur" render="absorbOrgId2Message" />
+                </h:inputText>
+                <h:message id="absorbOrgId2Message" for="absorbOrgId2" style="color:red; display:block;" />
+
+                <br/>
+                <h:commandButton value="Поглотить" action="#{organizationView.executeAbsorb}">
+                    <f:ajax execute="@form" render="absorbResult absorbOrgId1Message absorbOrgId2Message" />
+                </h:commandButton>
+
+                <h:panelGroup id="absorbResult">
+                    <h:panelGroup rendered="#{organizationView.absorbResult != null}">
+                        <p><b>Поглощена!</b> Обновлённая организация: #{organizationView.absorbResult.name}</p>
+                    </h:panelGroup>
+                </h:panelGroup>
+            </h:form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+    </script>
+
+</h:body>
+</html>

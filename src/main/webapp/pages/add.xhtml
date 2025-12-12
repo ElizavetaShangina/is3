@@ -1,0 +1,55 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns="http://www.w3.org/1999/xhtml"-->
+<!--      xmlns:h="http://xmlns.jcp.org/jsf/html"-->
+<!--      xmlns:f="http://xmlns.jcp.org/jsf/core">-->
+<!--<h:head>-->
+<!--    <title>Добавить организацию</title>-->
+<!--</h:head>-->
+<!--<h:body>-->
+<!--    <h1>Добавление новой организации</h1>-->
+
+<!--    <h:form id="addForm">-->
+<!--        <h:messages style="color: red;" />-->
+<!--        <h:panelGrid columns="2" cellpadding="5">-->
+<!--            <h:outputLabel for="name" value="Имя:" />-->
+<!--            <h:inputText id="name" value="#{organizationView.newOrganization.name}" required="true" />-->
+
+<!--            <h:outputLabel for="fullName" value="Полное имя:" />-->
+<!--            <h:inputText id="fullName" value="#{organizationView.newOrganization.fullName}" required="true" maxlength="1334" />-->
+
+<!--            <h:outputLabel for="type" value="Тип:" />-->
+<!--            <h:selectOneMenu id="type" value="#{organizationView.newOrganization.type}" required="true">-->
+<!--                <f:selectItem itemValue="COMMERCIAL" itemLabel="COMMERICAL" />-->
+<!--                <f:selectItem itemValue="GOVERNMENT" itemLabel="GOVERNMENT" />-->
+<!--                <f:selectItem itemValue="TRUST" itemLabel="TRUST" />-->
+<!--            </h:selectOneMenu>-->
+
+<!--            <h:outputLabel for="employeesCount" value="Сотрудников:" />-->
+<!--            <h:inputText id="employeesCount" value="#{organizationView.newOrganization.employeesCount}" required="true" />-->
+
+<!--            <h:outputLabel for="annualTurnover" value="Годовой оборот:" />-->
+<!--            <h:inputText id="annualTurnover" value="#{organizationView.newOrganization.annualTurnover}" />-->
+
+<!--            <h:outputLabel for="rating" value="Рейтинг:" />-->
+<!--            <h:inputText id="rating" value="#{organizationView.newOrganization.rating}" />-->
+
+<!--            <h:outputLabel for="coordX" value="Координата X:" />-->
+<!--            <h:inputText id="coordX" value="#{organizationView.newOrganization.coordinates.x}" required="true" />-->
+
+<!--            <h:outputLabel for="coordY" value="Координата Y:" />-->
+<!--            <h:inputText id="coordY" value="#{organizationView.newOrganization.coordinates.y}" required="true" />-->
+
+<!--            <h:outputLabel for="officialStreet" value="Официальная улица:" />-->
+<!--            <h:inputText id="officialStreet" value="#{organizationView.newOrganization.officialAddress.street}" required="true" />-->
+
+<!--            <h:outputLabel for="postalStreet" value="Почтовая улица:" />-->
+<!--            <h:inputText id="postalStreet" value="#{organizationView.newOrganization.postalAddress.street}" required="true" />-->
+
+
+<!--        </h:panelGrid>-->
+
+<!--        <h:commandButton value="Сохранить" action="#{organizationView.addOrganization}" ajax="false"/>-->
+<!--        <h:commandButton value="Отмена" action="list?faces-redirect=true" />-->
+<!--    </h:form>-->
+<!--</h:body>-->
+<!--</html>-->
