@@ -25,7 +25,7 @@ public class CsvImportModel {
     @CsvBindByName(column = "rating")
     private Float rating;
 
-    // --- КООРДИНАТЫ ---
+    // --- Coordinates ---
 
     @CsvBindByName(column = "coordinates.x", required = true)
     private Double x;
@@ -33,7 +33,7 @@ public class CsvImportModel {
     @CsvBindByName(column = "coordinates.y", required = true)
     private Integer y;
 
-    // --- ОФИЦИАЛЬНЫЙ АДРЕС ---
+    // --- Official address ---
 
     @CsvBindByName(column = "officialAddress.street", required = true)
     private String officialStreet;
@@ -41,7 +41,7 @@ public class CsvImportModel {
     @CsvBindByName(column = "officialAddress.zipCode")
     private String officialZipCode;
 
-    // --- ПОЧТОВЫЙ АДРЕС ---
+    // --- Postal address ---
 
     @CsvBindByName(column = "postalAddress.street", required = true)
     private String postalStreet;

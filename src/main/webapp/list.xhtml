@@ -158,7 +158,7 @@
 
             <p:column headerText="Время Запуска">
                 <h:outputText value="#{op.startTime}">
-                    <f:convertDateTime pattern="dd.MM.yyyy HH:mm:ss"/>
+                    <f:convertDateTime type="zonedDateTime" pattern="dd.MM.yyyy HH:mm:ss" />
                 </h:outputText>
             </p:column>
 

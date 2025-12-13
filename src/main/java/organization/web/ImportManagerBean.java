@@ -49,7 +49,7 @@ public class ImportManagerBean implements Serializable {
     public void loadHistory() {
         if (username == null || username.trim().isEmpty()) {
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_WARN, "Ошибка", "Введите имя пользователя."));
+                    new FacesMessage(FacesMessage.SEVERITY_WARN, "Error", "Enter user's name."));
             importHistory = List.of();
             return;
         }
@@ -57,7 +57,7 @@ public class ImportManagerBean implements Serializable {
         User currentUser = userRepository.findByUsername(username).orElse(null);
         if (currentUser == null) {
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Ошибка", "Пользователь не найден."));
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "User wasn't found."));
             importHistory = List.of();
             return;
         }
@@ -70,8 +70,8 @@ public class ImportManagerBean implements Serializable {
             this.importHistory = historyRepository.findByUser(currentUser); // Пользователь видит свои
         }
 
-        FacesContext.getCurrentInstance().addMessage(null,
-                new FacesMessage(FacesMessage.SEVERITY_INFO, "Успех", "История загружена для " + username));
+//        FacesContext.getCurrentInstance().addMessage(null,
+//                new FacesMessage(FacesMessage.SEVERITY_INFO, "Success", "History downloaded " + username));
     }
 
     // --- Логика Импорта Файла ---
@@ -80,18 +80,18 @@ public class ImportManagerBean implements Serializable {
         // Проверяем на null и на размер PrimeFaces-объекта
         if (uploadedFile == null || uploadedFile.getFileName() == null || uploadedFile.getFileName().isEmpty() || uploadedFile.getSize() == 0 || username == null || username.trim().isEmpty()) {
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_WARN, "Ошибка", "Выберите файл и введите имя пользователя."));
+                    new FacesMessage(FacesMessage.SEVERITY_WARN, "Error", "Choose file and enter user's name."));
             return;
         }
 
         try (InputStream is = uploadedFile.getInputStream()) {
             User currentUser = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден."));
+                    .orElseThrow(() -> new IllegalArgumentException("User doesn't found."));
 
             importService.performImport(is, currentUser);
 
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Успех", "Импорт успешно запущен/завершен."));
+                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Success", "Import successfully run."));
 
             // Обновляем историю после импорта
             loadHistory();
@@ -99,8 +99,11 @@ public class ImportManagerBean implements Serializable {
         } catch (Exception e) {
             // Выводим ошибку из сервиса/валидации
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Ошибка импорта", e.getMessage()));
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Import error", e.getMessage()));
             // Также обновляем историю, чтобы увидеть запись 'FAILURE'
+            loadHistory();
+        } finally {
+            // ОБНОВЛЯЕМ ИСТОРИЮ В ЛЮБОМ СЛУЧАЕ (и при успехе, и при ошибке)
             loadHistory();
         }
     }

@@ -33,9 +33,9 @@ public class UserService {
             // user.setPassword(...) <--- ЭТО УБРАЛИ
 
             em.persist(user);
-            System.out.println("--- СОЗДАН ПОЛЬЗОВАТЕЛЬ: " + username + " ---");
+            System.out.println("--- CREATED USER: " + username + " ---");
         } else {
-            System.out.println("--- ПОЛЬЗОВАТЕЛЬ УЖЕ ЕСТЬ: " + username + " ---");
+            System.out.println("--- USER ALREADY EXISTS: " + username + " ---");
         }
     }
 }

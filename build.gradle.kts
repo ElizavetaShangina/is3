@@ -36,7 +36,7 @@ tasks.test {
 tasks.war {
     archiveFileName.set("lab1.war")
 
-    destinationDirectory.set(file("C:\\wildfly-preview-26.1.3.Final\\wildfly-preview-26.1.3.Final\\wildfly-preview-26.1.3.Final\\standalone\\deployments"))
+    destinationDirectory.set(file("C:\\wildfly26.1.3\\wildfly-preview-26.1.3.Final\\wildfly-preview-26.1.3.Final\\standalone\\deployments"))
 }
 
 //"C:\\wildfly26.1.3\\wildfly-preview-26.1.3.Final\\wildfly-preview-26.1.3.Final\\bin"

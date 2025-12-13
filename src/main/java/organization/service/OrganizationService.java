@@ -1,14 +1,12 @@
 package organization.service;
 
-
-//import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import jakarta.inject.Inject;
-//import jakarta.transaction.Transactional;
-import jakarta.persistence.LockModeType;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
 import jakarta.validation.ValidationException;
 import lombok.NoArgsConstructor;
 import organization.dto.*;
@@ -17,15 +15,9 @@ import organization.exception.UniqueConstraintViolationException;
 import organization.mapper.OrganizationMapper;
 import organization.repository.OrganizationRepository;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.LockModeType;
-import jakarta.persistence.NoResultException;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
-//@ApplicationScoped
 @Stateless
 @NoArgsConstructor
 public class OrganizationService {
@@ -35,6 +27,30 @@ public class OrganizationService {
 
     @PersistenceContext
     private EntityManager em;
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public OrganizationResponseDTO createOrganization(OrganizationRequestDTO organizationDTO) {
+        Organization org = OrganizationMapper.toOrganization(organizationDTO);
+
+        // 1. Проверка уникальности (бизнес-логика)
+        checkProgrammaticUniqueness(org.getName(), org.getType());
+
+        // 2. Валидация полей
+        validateOrganization(org);
+
+        // 3. Сохранение (транзакция управляется контейнером)
+        organizationRepository.create(org);
+
+        return OrganizationMapper.toOrganizationResponseDTO(org);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void updateOrganization(Long organizationId, OrganizationResponseDTO organizationDTO) {
+        Organization organization = OrganizationMapper.toOrganization(organizationDTO);
+        validateOrganization(organization);
+        organization.setId(organizationId);
+        organizationRepository.update(organization);
+    }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public OrganizationResponseDTO getOrganizationWithMaxFullName() {
@@ -66,6 +82,8 @@ public class OrganizationService {
                         + (org2.getAnnualTurnover() != null ? org2.getAnnualTurnover() : 0)
         );
         org1.setEmployeesCount(org1.getEmployeesCount() + org2.getEmployeesCount());
+
+        organizationRepository.update(org1); // Явный update для надежности
         organizationRepository.delete(org2);
         return OrganizationMapper.toOrganizationResponseDTO(org1);
     }
@@ -85,32 +103,14 @@ public class OrganizationService {
         organizationRepository.update(absorber);
         organizationRepository.delete(absorbed);
 
-        Organization updatedAbsorber = organizationRepository.findById(dto.getOrgId1());
-
-        return OrganizationMapper.toOrganizationResponseDTO(updatedAbsorber);
-    }
-
-    // Обновить в organization/service/OrganizationService.java
-
-    @TransactionAttribute(TransactionAttributeType.REQUIRED) // Или @Transactional, если оставили CDI
-    public OrganizationResponseDTO createOrganization(OrganizationRequestDTO organizationDTO) {
-        Organization org = OrganizationMapper.toOrganization(organizationDTO);
-
-        // 1. ПРОВЕРКА ПРОГРАММНОЙ УНИКАЛЬНОСТИ
-        checkProgrammaticUniqueness(org.getName(), org.getType()); // <-- ДОБАВИТЬ
-
-        // 2. Валидация
-        validateOrganization(org);
-
-        // 3. Сохранение
-        organizationRepository.create(org);
-        return OrganizationMapper.toOrganizationResponseDTO(org);
+        return OrganizationMapper.toOrganizationResponseDTO(absorber);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public OrganizationResponseDTO getOrganizationById(Long id) {
         return OrganizationMapper.toOrganizationResponseDTO(organizationRepository.findById(id));
     }
+
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public List<OrganizationResponseDTO> getAllOrganizations() {
         return organizationRepository.findAll()
@@ -118,6 +118,7 @@ public class OrganizationService {
                 .map(OrganizationMapper::toOrganizationResponseDTO)
                 .collect(Collectors.toList());
     }
+
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void deleteOrganization(Long id) {
         if (id == null) {
@@ -125,22 +126,24 @@ public class OrganizationService {
         }
         organizationRepository.deleteById(id);
     }
-//    @TransactionAttribute(TransactionAttributeType.REQUIRED)
-//    public OrganizationResponseDTO createOrganization(OrganizationRequestDTO organization) {
-//        Organization org = OrganizationMapper.toOrganization(organization);
-//        validateOrganization(org);
-//        organizationRepository.create(org);
-//        return OrganizationMapper.toOrganizationResponseDTO(org);
-//    }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void updateOrganization(Long organizationId, OrganizationResponseDTO organizationDTO) {
-        Organization organization = OrganizationMapper.toOrganization(organizationDTO);
-        validateOrganization(organization);
+    // --- Private Helpers ---
 
-        organization.setId(organizationId);
-        organizationRepository.update(organization);
+    private void checkProgrammaticUniqueness(String title, OrganizationType type) {
+        try {
+            Long count = em.createQuery("SELECT count(o) FROM Organization o WHERE o.name = :name AND o.type = :type", Long.class)
+                    .setParameter("name", title)
+                    .setParameter("type", type)
+                    .getSingleResult();
 
+            if (count > 0) {
+                throw new UniqueConstraintViolationException(
+                        "Организация с Name='" + title + "' и Organization Type='" + type + "' уже существует."
+                );
+            }
+        } catch (NoResultException e) {
+            // OK
+        }
     }
 
     private void validateOrganization(Organization organization) {
@@ -176,38 +179,10 @@ public class OrganizationService {
             throw new ValidationException("Y должен быть больше -461");
         }
     }
+
     private void validateAddress(Address address, String addressType) {
         if (address.getStreet() == null || address.getStreet().trim().isEmpty()) {
             throw new ValidationException(addressType + " street не может быть пустым");
         }
     }
-
-    // Добавить в organization/service/OrganizationService.java
-
-    private void checkProgrammaticUniqueness(String title, OrganizationType type) {
-        try {
-            // УБРАЛИ .setLockMode(LockModeType.PESSIMISTIC_WRITE) - из-за него падало
-            Long count = em.createQuery("SELECT count(o) FROM Organization o WHERE o.name = :name AND o.type = :type", Long.class)
-                    .setParameter("name", title)
-                    .setParameter("type", type)
-                    .getSingleResult();
-
-            if (count > 0) {
-                throw new UniqueConstraintViolationException(
-                        "Организация с Name='" + title + "' и Organization Type='" + type + "' уже существует."
-                );
-            }
-        } catch (NoResultException e) {
-            // Игнорируем, если ничего не найдено (хотя count вернет 0, а не исключение)
-        }
-    }
-
-
-    //для дебага
-//    @Transactional
-//    public TestEntity createEntity(TestEntity test) {
-//        System.out.println("starting service addEntity");
-//        return organizationRepository.createTestEntity(test);
-//    }
-
 }

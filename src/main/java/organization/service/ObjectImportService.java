@@ -46,7 +46,7 @@ public class ObjectImportService {
                     .parse();
 
             if (importModels.isEmpty()) {
-                throw new IllegalArgumentException("Файл пустой");
+                throw new IllegalArgumentException("File is empty");
             }
 
             // 3. Создаем (Транзакция БД здесь активна)
@@ -65,7 +65,7 @@ public class ObjectImportService {
             historyService.updateLogEntry(logEntry.getId(), ImportStatus.FAILURE, 0, msg);
 
             // ВАЖНО: Кидаем RuntimeException, чтобы WildFly откатил создание организаций
-            throw new RuntimeException("Сбой импорта: " + msg, e);
+            throw new RuntimeException("Import error: " + msg, e);
         }
     }
 
@@ -74,7 +74,7 @@ public class ObjectImportService {
         // 1. Координаты
         Coordinates coordinates = new Coordinates();
         if (model.getX() == null || model.getY() == null) {
-            throw new ValidationException("Координаты X и Y не могут быть пустыми.");
+            throw new ValidationException("Coordinates X and Y can't be empty.");
         }
         coordinates.setX(model.getX());
         coordinates.setY(model.getY());
@@ -82,7 +82,7 @@ public class ObjectImportService {
         // 2. Официальный адрес
         Address officialAddress = new Address();
         if (model.getOfficialStreet() == null) {
-            throw new ValidationException("Официальный адрес (улица) не может быть пустым.");
+            throw new ValidationException("Official address (street) can't be empty.");
         }
         officialAddress.setStreet(model.getOfficialStreet());
         officialAddress.setZipCode(model.getOfficialZipCode());
