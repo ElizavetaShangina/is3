@@ -186,21 +186,19 @@ public class OrganizationService {
 
     private void checkProgrammaticUniqueness(String title, OrganizationType type) {
         try {
-            // Проверяем, существует ли уже организация с таким Name и Type.
-            // Используем LockModeType.PESSIMISTIC_WRITE для блокировки от гонки данных.
-            em.createQuery("SELECT o FROM Organization o WHERE o.name = :name AND o.type = :type", Organization.class)
+            // УБРАЛИ .setLockMode(LockModeType.PESSIMISTIC_WRITE) - из-за него падало
+            Long count = em.createQuery("SELECT count(o) FROM Organization o WHERE o.name = :name AND o.type = :type", Long.class)
                     .setParameter("name", title)
                     .setParameter("type", type)
-                    .setLockMode(LockModeType.PESSIMISTIC_WRITE) // Применяет LOCK в БД
                     .getSingleResult();
 
-            // Если объект найден, выбрасываем исключение
-            throw new UniqueConstraintViolationException(
-                    "Организация с Name='" + title + "' и Organization Type='" + type + "' уже существует."
-            );
-
+            if (count > 0) {
+                throw new UniqueConstraintViolationException(
+                        "Организация с Name='" + title + "' и Organization Type='" + type + "' уже существует."
+                );
+            }
         } catch (NoResultException e) {
-            // Все хорошо, объекта нет
+            // Игнорируем, если ничего не найдено (хотя count вернет 0, а не исключение)
         }
     }
 

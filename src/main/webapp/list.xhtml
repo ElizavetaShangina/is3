@@ -29,7 +29,7 @@
             <p:inputText value="#{importManager.username}" required="true" label="Username"/>
             <p:commandButton value="Загрузить Историю"
                              action="#{importManager.loadHistory}"
-                             update="@form :mainForm:msgs"/>
+                             update="@form :mainForm:msgs :mainForm:historyTable"/>
         </p:panelGrid>
 
         <!-- Блок загрузки CSV -->
@@ -45,7 +45,7 @@
 
             <p:commandButton value="Добавить Организации из CSV"
                              action="#{importManager.upload}"
-                             ajax="true"
+                             ajax="false"
                              update="@form :mainForm:msgs"
                              onclick="return confirm('Запустить импорт? Операция может занять время.');"/>
         </div>
@@ -133,7 +133,8 @@
             (<h:outputText value="Администратор" rendered="#{importManager.admin}"/>)
         </h2>
 
-        <p:dataTable value="#{importManager.importHistory}"
+        <p:dataTable id="historyTable"
+                     value="#{importManager.importHistory}"
                      var="op"
                      styleClass="table"
                      emptyMessage="История импорта не найдена. Введите имя пользователя и нажмите 'Загрузить Историю'.">

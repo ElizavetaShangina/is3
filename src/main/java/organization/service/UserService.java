@@ -3,23 +3,39 @@ package organization.service;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
-import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import organization.entity.User;
-import organization.repository.UserRepository;
+import java.util.List;
 
-@Stateless // Это EJB, который управляет транзакцией
+@Stateless
 public class UserService {
 
-    @Inject
-    private UserRepository userRepository;
+    @PersistenceContext
+    private EntityManager em;
 
-    /**
-     * Создает или находит тестовых пользователей в отдельной транзакции.
-     */
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW) // <-- Гарантирует новую транзакцию
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void setupTestUsers() {
-        // Логика создания тестовых пользователей
-        userRepository.findOrCreate("admin", true);
-        userRepository.findOrCreate("user1", false);
+        createRequestUser("admin", true);
+        createRequestUser("user1", false);
+    }
+
+    private void createRequestUser(String username, boolean isAdmin) {
+        // Проверяем, есть ли юзер
+        List<User> existing = em.createQuery("SELECT u FROM User u WHERE u.username = :name", User.class)
+                .setParameter("name", username)
+                .getResultList();
+
+        if (existing.isEmpty()) {
+            User user = new User();
+            user.setUsername(username);
+            user.setAdmin(isAdmin);
+            // user.setPassword(...) <--- ЭТО УБРАЛИ
+
+            em.persist(user);
+            System.out.println("--- СОЗДАН ПОЛЬЗОВАТЕЛЬ: " + username + " ---");
+        } else {
+            System.out.println("--- ПОЛЬЗОВАТЕЛЬ УЖЕ ЕСТЬ: " + username + " ---");
+        }
     }
 }

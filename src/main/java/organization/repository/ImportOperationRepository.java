@@ -7,20 +7,26 @@ import organization.entity.ImportOperation;
 import organization.entity.User;
 
 import java.util.List;
-@ApplicationScoped // CDI Bean
+
+@ApplicationScoped
 public class ImportOperationRepository {
 
     @PersistenceContext
     private EntityManager em;
 
+    // Найти все операции (для админа)
     public List<ImportOperation> findAll() {
-        return em.createQuery("SELECT io FROM ImportOperation io ORDER BY io.startTime DESC", ImportOperation.class)
+        return em.createQuery("SELECT i FROM ImportOperation i ORDER BY i.startTime DESC", ImportOperation.class)
                 .getResultList();
     }
 
+    // Найти операции конкретного пользователя (по ID!)
     public List<ImportOperation> findByUser(User user) {
-        return em.createQuery("SELECT io FROM ImportOperation io WHERE io.user = :user ORDER BY io.startTime DESC", ImportOperation.class)
-                .setParameter("user", user)
+        if (user == null) return List.of();
+
+        // Используем user.id, это надежнее, чем сравнивать объекты
+        return em.createQuery("SELECT i FROM ImportOperation i WHERE i.user.id = :userId ORDER BY i.startTime DESC", ImportOperation.class)
+                .setParameter("userId", user.getId())
                 .getResultList();
     }
 }

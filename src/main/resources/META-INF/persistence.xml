@@ -19,7 +19,7 @@
 <!--        <class>organization.entity.TestEntity</class>-->
 
         <properties>
-            <property name="jakarta.persistence.schema-generation.database.action" value="create"/>
+            <property name="jakarta.persistence.schema-generation.database.action" value="update"/>
             <property name="eclipselink.target-database" value="PostgreSQL"/>
             <property name="eclipselink.logging.level.sql" value="FINE"/>
             <property name="eclipselink.logging.parameters" value="true"/>
