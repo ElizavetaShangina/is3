@@ -47,38 +47,31 @@ public class ImportManagerBean implements Serializable {
 
 
     public void loadHistory() {
-        System.out.println("--- ЗАГРУЗКА ИСТОРИИ ДЛЯ: " + username + " ---");
-
         if (username == null || username.trim().isEmpty()) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_WARN, "Ошибка", "Введите имя пользователя."));
+            importHistory = List.of();
             return;
         }
 
-        // Ищем пользователя свежим запросом
         User currentUser = userRepository.findByUsername(username).orElse(null);
-
         if (currentUser == null) {
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Ошибка", "Пользователь '" + username + "' не найден."));
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Ошибка", "Пользователь не найден."));
             importHistory = List.of();
             return;
         }
 
         this.isAdmin = currentUser.isAdmin();
-        System.out.println("Пользователь найден. Admin: " + isAdmin + ", ID: " + currentUser.getId());
 
         if (this.isAdmin) {
-            this.importHistory = historyRepository.findAll();
+            this.importHistory = historyRepository.findAll(); // Администратор видит все
         } else {
-            this.importHistory = historyRepository.findByUser(currentUser);
+            this.importHistory = historyRepository.findByUser(currentUser); // Пользователь видит свои
         }
 
-        System.out.println("Найдено записей истории: " + (importHistory != null ? importHistory.size() : "null"));
-
         FacesContext.getCurrentInstance().addMessage(null,
-                new FacesMessage(FacesMessage.SEVERITY_INFO, "Успех",
-                        "Загружено записей: " + (importHistory != null ? importHistory.size() : 0)));
+                new FacesMessage(FacesMessage.SEVERITY_INFO, "Успех", "История загружена для " + username));
     }
 
     // --- Логика Импорта Файла ---
