@@ -15,9 +15,6 @@ public class UserRepository {
     @PersistenceContext
     private EntityManager em;
 
-    /**
-     * Поиск пользователя по имени
-     */
     public Optional<User> findByUsername(String username) {
         if (username == null || username.trim().isEmpty()) {
             return Optional.empty();
@@ -32,9 +29,7 @@ public class UserRepository {
         }
     }
 
-    /**
-     * Метод для создания тестового пользователя, если он не существует (для заглушки)
-     */
+
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public User findOrCreate(String username, boolean isAdmin) {
         return findByUsername(username).orElseGet(() -> {

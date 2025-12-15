@@ -18,8 +18,6 @@ public class OrganizationRepository {
     @PersistenceContext(unitName = "organizationPU")
     private EntityManager em;
 
-    // В JTA (WildFly) транзакция уже открыта Сервисом.
-    // Мы просто используем методы EntityManager напрямую.
 
     public Organization create(Organization organization) {
         em.persist(organization);

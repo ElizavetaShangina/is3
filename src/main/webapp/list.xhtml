@@ -17,13 +17,8 @@
 
         <p:messages id="msgs" showDetail="true" autoUpdate="true" closable="true" globalOnly="true"/>
 
-        <!-- ========================================================================================= -->
-        <!-- НОВЫЙ БЛОК: УПРАВЛЕНИЕ ИМПОРТОМ И АУТЕНТИФИКАЦИЯ (ЗАГЛУШКА) -->
-        <!-- ========================================================================================= -->
-
         <h2>Управление Импортом</h2>
 
-        <!-- Ввод имени пользователя и загрузка истории -->
         <p:panelGrid columns="3" style="margin-bottom: 10px;">
             <h:outputText value="Имя пользователя (для импорта/истории):"/>
             <p:inputText value="#{importManager.username}" required="true" label="Username"/>
@@ -32,7 +27,6 @@
                              update="@form :mainForm:msgs"/>
         </p:panelGrid>
 
-        <!-- Блок загрузки CSV -->
         <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 20px;">
             <h3>Массовое добавление (CSV)</h3>
             <p:fileUpload value="#{importManager.uploadedFile}"
@@ -51,10 +45,6 @@
         </div>
 
         <p:separator/>
-
-        <!-- ========================================================================================= -->
-        <!-- КОНЕЦ НОВОГО БЛОКА: УПРАВЛЕНИЕ ИМПОРТОМ И АУТЕНТИФИКАЦИЯ -->
-        <!-- ========================================================================================= -->
 
         <!-- Фильтр по имени -->
         <label>Фильтр по полному имени (точное совпадение):
@@ -124,10 +114,6 @@
         <!-- Обновляем только таблицу данных организации, а не всю форму -->
         <p:poll interval="3" listener="#{organizationView.loadAll}" update="mainDataTable" />
         <br/>
-
-        <!-- ========================================================================================= -->
-        <!-- НОВЫЙ БЛОК: ТАБЛИЦА ИСТОРИИ ИМПОРТА -->
-        <!-- ========================================================================================= -->
 
         <h2>История Импорта
             (<h:outputText value="Администратор" rendered="#{importManager.admin}"/>)
@@ -324,7 +310,6 @@
     </h:panelGroup>
 
     <!-- МОДАЛКА ДОБАВЛЕНИЯ ОРГАНИЗАЦИИ -->
-    <!-- МОДАЛКА ДОБАВЛЕНИЯ ОРГАНИЗАЦИИ -->
     <h:panelGroup id="modalAddPanel">
         <div id="addModal"
              class="modal"
@@ -335,7 +320,6 @@
                     <span class="close" onclick="closeAddModal()">&#215;</span>
                 </h:commandLink>
                 <h3>Добавить организацию</h3>
-                <!-- p:messages лучше всего оставить для суммарных ошибок -->
                 <p:messages autoUpdate="true" showDetail="true" showSummary="false" globalOnly="true" />
                 <h:form id="addForm" prependId="false">
                     <!-- Имя -->
@@ -715,7 +699,7 @@
         }
 <!--        function closeAddModalAfterAjax(xhr, status, args) {-->
 <!--             if (args &amp;&amp; !args.validationFailed) {-->
-<!--                 closeAddModal(); // Предполагаем, что у вас есть эта функция в modal.js-->
+<!--                 closeAddModal(); // -->
 <!--             }-->
         }
     </script>

@@ -21,7 +21,6 @@ public class UserService {
     }
 
     private void createRequestUser(String username, boolean isAdmin) {
-        // Проверяем, есть ли юзер
         List<User> existing = em.createQuery("SELECT u FROM User u WHERE u.username = :name", User.class)
                 .setParameter("name", username)
                 .getResultList();
@@ -30,7 +29,6 @@ public class UserService {
             User user = new User();
             user.setUsername(username);
             user.setAdmin(isAdmin);
-            // user.setPassword(...) <--- ЭТО УБРАЛИ
 
             em.persist(user);
             System.out.println("--- CREATED USER: " + username + " ---");

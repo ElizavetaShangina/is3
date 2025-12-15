@@ -27,30 +27,22 @@ public class ImportHistoryResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    // Пользовательское имя теперь передается как QueryParam
     public Response getHistory(@QueryParam("username") String username) {
 
-        // Получаем пользователя по имени. Если не найден, создаем тестового (для заглушки)
         User currentUser = userRepository.findByUsername(username).orElse(null);
 
         if (currentUser == null) {
-            // Если пользователь не найден (или не введен), возвращаем пустой список
             return Response.ok(List.of()).build();
         }
 
         List<ImportOperation> history;
 
-        // Предполагаем, что администратор - это пользователь 'admin'
-        // В реальной системе это проверяется через currentUser.isAdmin()
         if (currentUser.isAdmin() || "admin".equals(currentUser.getUsername())) {
-            // Администратор видит все операции
             history = historyRepository.findAll();
         } else {
-            // Обычный пользователь видит только свои операции
             history = historyRepository.findByUser(currentUser);
         }
 
-        // В идеале: маппинг в DTO, но оставляем Entity для простоты
         return Response.ok(history).build();
     }
 }

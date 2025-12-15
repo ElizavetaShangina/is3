@@ -24,7 +24,6 @@ public class SpecialOperationsView implements Serializable {
     private OrganizationResponseDTO mergeResult;
     private OrganizationResponseDTO absorbResult;
 
-    // Поля для ввода
     private String postalStreet;
     private String postalZipCode;
     private OrganizationType selectedType;
@@ -37,8 +36,6 @@ public class SpecialOperationsView implements Serializable {
 
     private Long absorbOrgId1;
     private Long absorbOrgId2;
-
-    // --- Операции ---
 
     public void findMaxFullName() {
         maxFullNameOrg = organizationService.getOrganizationWithMaxFullName();

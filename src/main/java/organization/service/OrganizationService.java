@@ -72,7 +72,7 @@ public class OrganizationService {
         Organization org1 = organizationRepository.findById(dto.getOrgId1());
         Organization org2 = organizationRepository.findById(dto.getOrgId2());
         if (org1 == null || org2 == null) {
-            throw new IllegalArgumentException("Одна из организаций не найдена");
+            throw new IllegalArgumentException("One of the organizations was not found");
         }
         org1.setName(dto.getNewName());
         org1.setFullName(dto.getNewName());
@@ -93,7 +93,7 @@ public class OrganizationService {
         Organization absorber = organizationRepository.findById(dto.getOrgId1());
         Organization absorbed = organizationRepository.findById(dto.getOrgId2());
         if (absorber == null || absorbed == null) {
-            throw new IllegalArgumentException("Одна из организаций не найдена");
+            throw new IllegalArgumentException("One of the organizations was not found");
         }
 
         absorber.setEmployeesCount(absorber.getEmployeesCount() + absorbed.getEmployeesCount());
@@ -122,12 +122,11 @@ public class OrganizationService {
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void deleteOrganization(Long id) {
         if (id == null) {
-            throw new IllegalArgumentException("ID не может быть null");
+            throw new IllegalArgumentException("ID can't be null");
         }
         organizationRepository.deleteById(id);
     }
 
-    // --- Private Helpers ---
 
     private void checkProgrammaticUniqueness(String title, OrganizationType type) {
         try {
@@ -138,7 +137,7 @@ public class OrganizationService {
 
             if (count > 0) {
                 throw new UniqueConstraintViolationException(
-                        "Организация с Name='" + title + "' и Organization Type='" + type + "' уже существует."
+                        "Organization with Name='" + title + "' and Organization Type='" + type + "' already exists."
                 );
             }
         } catch (NoResultException e) {
@@ -148,25 +147,25 @@ public class OrganizationService {
 
     private void validateOrganization(Organization organization) {
         if (organization.getName() == null || organization.getName().trim().isEmpty()) {
-            throw new ValidationException("Organization name не может быть пустым");
+            throw new ValidationException("Organization name can't be empty");
         }
         if (organization.getOfficialAddress() == null) {
-            throw new ValidationException("Official address не может быть null");
+            throw new ValidationException("Official address can't be null");
         }
         if (organization.getAnnualTurnover() <= 0) {
-            throw new ValidationException("Annual turnover должен быть положительным");
+            throw new ValidationException("Annual turnover must be positive");
         }
         if (organization.getEmployeesCount() <= 0) {
-            throw new ValidationException("Employees count должно быть положительным");
+            throw new ValidationException("Employees count must be positive");
         }
         if (organization.getRating() <= 0) {
-            throw new ValidationException("Rating должке быть положительным");
+            throw new ValidationException("Rating must be positive");
         }
         if (organization.getType() == null) {
-            throw new ValidationException("Organization type не может быть null");
+            throw new ValidationException("Organization type can't be null");
         }
         if (organization.getPostalAddress() == null) {
-            throw new ValidationException("Postal address не может быть null");
+            throw new ValidationException("Postal address can't be null");
         }
 
         validateAddress(organization.getOfficialAddress(), "Official address");
@@ -176,13 +175,13 @@ public class OrganizationService {
 
     private void validateCoordinates(Coordinates coordinates) {
         if (coordinates.getY() <= -461) {
-            throw new ValidationException("Y должен быть больше -461");
+            throw new ValidationException("Y must be more than -461");
         }
     }
 
     private void validateAddress(Address address, String addressType) {
         if (address.getStreet() == null || address.getStreet().trim().isEmpty()) {
-            throw new ValidationException(addressType + " street не может быть пустым");
+            throw new ValidationException(addressType + " street can't be empty");
         }
     }
 }

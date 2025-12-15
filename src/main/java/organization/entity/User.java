@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "app_user") // app_user, чтобы избежать конфликта с зарезервированными словами
+@Table(name = "app_user") 
 public class User implements Serializable {
 
     @Id
@@ -17,7 +17,6 @@ public class User implements Serializable {
     @Column(name = "is_admin", nullable = false)
     private boolean isAdmin = false;
 
-    // Геттеры и Сеттеры...
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

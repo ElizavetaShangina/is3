@@ -4,7 +4,7 @@ import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
 import organization.entity.OrganizationType;
 
-@Data // Lombok сгенерирует геттеры и сеттеры
+@Data
 public class CsvImportModel {
 
     @CsvBindByName(column = "name", required = true)
@@ -25,15 +25,12 @@ public class CsvImportModel {
     @CsvBindByName(column = "rating")
     private Float rating;
 
-    // --- Coordinates ---
-
     @CsvBindByName(column = "coordinates.x", required = true)
     private Double x;
 
     @CsvBindByName(column = "coordinates.y", required = true)
     private Integer y;
 
-    // --- Official address ---
 
     @CsvBindByName(column = "officialAddress.street", required = true)
     private String officialStreet;
@@ -41,7 +38,6 @@ public class CsvImportModel {
     @CsvBindByName(column = "officialAddress.zipCode")
     private String officialZipCode;
 
-    // --- Postal address ---
 
     @CsvBindByName(column = "postalAddress.street", required = true)
     private String postalStreet;

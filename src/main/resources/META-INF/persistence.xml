@@ -19,6 +19,7 @@
 <!--        <class>organization.entity.TestEntity</class>-->
 
         <properties>
+<!--            <property name="eclipselink.jdbc.property.transaction-isolation" value="TRANSACTION_SERIALIZABLE"/>-->
             <property name="eclipselink.target-server" value="JBoss"/>
             <property name="jakarta.persistence.schema-generation.database.action" value="update"/>
             <property name="eclipselink.target-database" value="PostgreSQL"/>

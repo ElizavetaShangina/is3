@@ -20,11 +20,10 @@ public class ImportOperationRepository {
                 .getResultList();
     }
 
-    // Найти операции конкретного пользователя (по ID!)
     public List<ImportOperation> findByUser(User user) {
         if (user == null) return List.of();
 
-        // Используем user.id, это надежнее, чем сравнивать объекты
+        // Используем user.id
         return em.createQuery("SELECT i FROM ImportOperation i WHERE i.user.id = :userId ORDER BY i.startTime DESC", ImportOperation.class)
                 .setParameter("userId", user.getId())
                 .getResultList();

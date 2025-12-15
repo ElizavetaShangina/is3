@@ -11,7 +11,6 @@ import java.time.ZonedDateTime;
 
 @Stateless
 @TransactionManagement(TransactionManagementType.CONTAINER)
-// Убираем TransactionManagement(BEAN), используем стандартный (CONTAINER)
 public class ImportHistoryService {
 
     @PersistenceContext
@@ -51,8 +50,6 @@ public class ImportHistoryService {
             }
             managedLog.setErrorMessage(errorMessage);
 
-            // em.merge не обязателен, если объект managed, но для надежности оставим
-            //em.merge(managedLog);
         }
     }
 }

@@ -1,12 +1,12 @@
 package organization.web;
+
 import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.SessionScoped; // SessionScoped для сохранения username
+import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.primefaces.model.file.UploadedFile;
-import organization.repository.UserRepository;
 import organization.entity.ImportOperation;
 import organization.entity.User;
 import organization.repository.ImportOperationRepository;
@@ -19,7 +19,7 @@ import java.io.Serializable;
 import java.util.List;
 
 @Named("importManager")
-@SessionScoped // Храним состояние, чтобы не терять имя пользователя и историю
+@SessionScoped
 public class ImportManagerBean implements Serializable {
 
     @Inject
@@ -45,7 +45,6 @@ public class ImportManagerBean implements Serializable {
         userService.setupTestUsers();
     }
 
-
     public void loadHistory() {
         if (username == null || username.trim().isEmpty()) {
             FacesContext.getCurrentInstance().addMessage(null,
@@ -65,19 +64,13 @@ public class ImportManagerBean implements Serializable {
         this.isAdmin = currentUser.isAdmin();
 
         if (this.isAdmin) {
-            this.importHistory = historyRepository.findAll(); // Администратор видит все
+            this.importHistory = historyRepository.findAll();
         } else {
-            this.importHistory = historyRepository.findByUser(currentUser); // Пользователь видит свои
+            this.importHistory = historyRepository.findByUser(currentUser);
         }
-
-//        FacesContext.getCurrentInstance().addMessage(null,
-//                new FacesMessage(FacesMessage.SEVERITY_INFO, "Success", "History downloaded " + username));
     }
 
-    // --- Логика Импорта Файла ---
-
     public void upload() {
-        // Проверяем на null и на размер PrimeFaces-объекта
         if (uploadedFile == null || uploadedFile.getFileName() == null || uploadedFile.getFileName().isEmpty() || uploadedFile.getSize() == 0 || username == null || username.trim().isEmpty()) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_WARN, "Error", "Choose file and enter user's name."));
@@ -93,23 +86,50 @@ public class ImportManagerBean implements Serializable {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_INFO, "Success", "Import successfully run."));
 
-            // Обновляем историю после импорта
             loadHistory();
 
         } catch (Exception e) {
-            // Выводим ошибку из сервиса/валидации
+            // 1. Получаем чистое сообщение
+            String cleanMessage = getRootErrorMessage(e);
+
+            // 2. ВАЖНО: Передаем именно cleanMessage, а не e.getMessage()
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Import error", e.getMessage()));
-            // Также обновляем историю, чтобы увидеть запись 'FAILURE'
-            loadHistory();
-        } finally {
-            // ОБНОВЛЯЕМ ИСТОРИЮ В ЛЮБОМ СЛУЧАЕ (и при успехе, и при ошибке)
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Import error", cleanMessage));
+
             loadHistory();
         }
+        // finally не нужен, так как loadHistory() вызывается в обоих блоках try/catch корректно
     }
 
-    // --- Геттеры и Сеттеры ---
+    private String getRootErrorMessage(Throwable e) {
+        Throwable root = e;
+        while (root.getCause() != null) {
+            root = root.getCause();
+        }
 
+        String msg = root.getMessage();
+
+        if (msg == null) {
+            return "An internal server error has occurred";
+        }
+
+        if (msg.startsWith("Import error: ")) {
+            msg = msg.substring("Import error: ".length());
+        }
+
+        if (msg.startsWith("java.lang.RuntimeException: ")) {
+            msg = msg.substring("java.lang.RuntimeException: ".length());
+        }
+
+
+        if (msg.contains("Organization with Name") && msg.contains("already exists")) {
+            return "Unique violation: An organization with this name and type already exists. Please check the CSV file for duplicates.";
+        }
+
+        return msg;
+    }
+
+    // Геттеры и сеттеры
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     public UploadedFile getUploadedFile() { return uploadedFile; }

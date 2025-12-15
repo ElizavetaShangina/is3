@@ -192,7 +192,6 @@ public class OrganizationView implements Serializable {
 //            return null;
 //        }
 //    }
-    // === Методы специальных операций (добавьте эти) ===
 
 
     public void executeCountByPostalAddress() {
@@ -228,7 +227,7 @@ public class OrganizationView implements Serializable {
         req.setOrgId1(absorbOrgId1);
         req.setOrgId2(absorbOrgId2);
         absorbResult = organizationService.absorbOrganization(req);
-        loadAll(); // обновить список
+        loadAll();
     }
 
 

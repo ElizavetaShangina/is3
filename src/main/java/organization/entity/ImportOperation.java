@@ -12,7 +12,6 @@ public class ImportOperation implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Связь с таблицей User
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -32,8 +31,6 @@ public class ImportOperation implements Serializable {
 
     @Column(name = "error_message", length = 4096)
     private String errorMessage;
-
-    // Геттеры и Сеттеры...
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

@@ -16,7 +16,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-@Stateless // <-- Вернули классический EJB
+@Stateless
 public class ObjectImportService {
 
     @Inject
@@ -24,20 +24,14 @@ public class ObjectImportService {
 
     @Inject
     private ImportHistoryService historyService;
-
-    // Эта транзакция (REQUIRED) будет держать создание организаций.
-    // Если вылетит исключение -> она откатится.
-    // А логи (historyService) НЕ откатятся, потому что они управляют собой сами.
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void performImport(InputStream csvData, User currentUser) throws Exception {
 
-        // 1. Пишем лог (вручную, сразу в БД)
         ImportOperation logEntry = historyService.createLogEntry(currentUser, ImportStatus.IN_PROGRESS);
         int objectsAdded = 0;
 
         try (Reader reader = new InputStreamReader(csvData, StandardCharsets.UTF_8)) {
 
-            // 2. Парсим
             List<CsvImportModel> importModels = new CsvToBeanBuilder<CsvImportModel>(reader)
                     .withType(CsvImportModel.class)
                     .withSeparator(',')
@@ -49,22 +43,18 @@ public class ObjectImportService {
                 throw new IllegalArgumentException("File is empty");
             }
 
-            // 3. Создаем (Транзакция БД здесь активна)
             for (CsvImportModel model : importModels) {
                 OrganizationRequestDTO orgDto = mapToOrganizationRequestDTO(model);
                 organizationService.createOrganization(orgDto);
                 objectsAdded++;
             }
 
-            // 4. Обновляем лог (вручную, сразу в БД)
             historyService.updateLogEntry(logEntry.getId(), ImportStatus.SUCCESS, objectsAdded, null);
 
         } catch (Exception e) {
-            // Пишем ошибку (вручную, сразу в БД)
             String msg = e.getMessage() != null ? e.getMessage() : e.toString();
             historyService.updateLogEntry(logEntry.getId(), ImportStatus.FAILURE, 0, msg);
 
-            // ВАЖНО: Кидаем RuntimeException, чтобы WildFly откатил создание организаций
             throw new RuntimeException("Import error: " + msg, e);
         }
     }
