@@ -6,10 +6,7 @@
              https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
 
     <persistence-unit name="organizationPU" transaction-type="RESOURCE_LOCAL">
-        <!-- Указываем провайдер -->
         <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-
-        <!-- Мы НЕ указываем здесь jta-data-source -->
 
         <class>organization.entity.Organization</class>
         <class>organization.entity.Coordinates</class>
@@ -24,8 +21,7 @@
             <property name="jakarta.persistence.schema-generation.database.action" value="update"/>
             <property name="eclipselink.target-database" value="PostgreSQL"/>
 
-            <!-- ВАЖНО: Добавляем параметры подключения прямо сюда, чтобы WildFly не падал при старте.
-                 В коде EntityManagerProducer мы все равно подменим это на DBCP2 DataSource. -->
+            <!-- Вернули настройки подключения для старта WildFly -->
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
             <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/studs"/>
             <property name="jakarta.persistence.jdbc.user" value="s408391"/>
