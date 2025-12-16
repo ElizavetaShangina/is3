@@ -35,7 +35,6 @@ public class ImportOperation implements Serializable {
     @Column(name = "error_message", length = 4096)
     private String errorMessage;
 
-    // НОВОЕ ПОЛЕ: Имя файла в MinIO
     @Column(name = "minio_object_name")
     private String minioObjectName;
 }
