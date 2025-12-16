@@ -2,6 +2,7 @@ package organization.entity;
 import jakarta.persistence.*;
 
 import jakarta.validation.constraints.*;
+import org.eclipse.persistence.annotations.Cache;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,6 +13,7 @@ import java.time.ZonedDateTime;
 @Setter
 @Entity
 @Table(name = "organizations")
+@Cacheable(true)
 public class Organization implements Serializable {
 
     @Id

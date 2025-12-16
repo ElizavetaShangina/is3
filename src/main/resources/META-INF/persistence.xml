@@ -30,6 +30,8 @@
             <property name="eclipselink.logging.level.sql" value="FINE"/>
             <property name="eclipselink.logging.parameters" value="true"/>
             <property name="eclipselink.cache.shared.default" value="true"/>
+            <!-- Запретить обновление из базы при наличии в кэше для findById -->
+            <property name="eclipselink.refresh" value="false"/>
             <property name="eclipselink.cache.size.default" value="500"/>
         </properties>
     </persistence-unit>

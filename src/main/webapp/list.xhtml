@@ -63,6 +63,11 @@
         <button type="button" onclick="openModal('countTypeModal')">Считать по типу</button>
         <button type="button" onclick="openModal('mergeModal')">Объединить</button>
         <button type="button" onclick="openModal('absorbModal')">Поглотить</button>
+        <p:commandButton value="Очистить L2 Cache"
+                         action="#{organizationView.clearL2Cache}"
+                         update="@form:msgs"
+                         onclick="return confirm('Вы уверены, что хотите очистить L2 кэш?');"
+                         style="background-color: #ff9800; color: white; margin-left: 10px;"/>
 
 
         <h:commandButton value="Добавить организацию" action="#{organizationView.prepareNewOrganization}">

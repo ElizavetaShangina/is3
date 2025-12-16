@@ -1,9 +1,12 @@
 package organization.view;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import organization.config.EntityManagerProducer;
 import organization.dto.*;
 import organization.entity.Address;
 import organization.entity.Coordinates;
@@ -23,6 +26,9 @@ import java.util.stream.Collectors;
 @Named
 @ViewScoped
 public class OrganizationView implements Serializable {
+
+    @Inject
+    private EntityManagerProducer emProducer;
 
     @Inject
     private OrganizationService organizationService;
@@ -92,6 +98,12 @@ public class OrganizationView implements Serializable {
     public void loadAll_filter() {
         allOrganizations = organizationService.getAllOrganizations();
         organizationsDTO = new ArrayList<>(allOrganizations); // начальное состояние — полный список
+    }
+
+    public void clearL2Cache() {
+        emProducer.clearAllCaches();
+        FacesContext.getCurrentInstance().addMessage(null,
+                new FacesMessage(FacesMessage.SEVERITY_INFO, "Cache L2 cleared", "Cached data deleted."));
     }
 
     public void applyFullNameFilter() {

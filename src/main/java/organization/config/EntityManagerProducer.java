@@ -68,6 +68,17 @@ public class EntityManagerProducer {
         try { if (dataSource != null) dataSource.close(); } catch (Exception e) { e.printStackTrace(); }
     }
 
+    public void clearAllCaches() {
+        if (emf != null && emf.isOpen()) {
+            // Очищаем кэш для Organization и всех кэшируемых сущностей.
+            // Если вы используете Infinispan, это очистит все, чем управляет JPA.
+            emf.getCache().evictAll();
+            System.out.println("=======================================================");
+            System.out.println(">>> L2 CACHE CLEARED MANUALLY");
+            System.out.println("=======================================================");
+        }
+    }
+
     public EntityManagerFactory getEmf() {
         return emf;
     }
