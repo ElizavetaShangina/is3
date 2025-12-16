@@ -17,6 +17,35 @@
 
         <p:messages id="msgs" showDetail="true" autoUpdate="true" closable="true" globalOnly="true"/>
 
+        <h2>Управление Распределенной Транзакцией (2PC)</h2>
+        <p:panelGrid columns="4" style="margin-bottom: 20px;">
+            <p:commandButton value="СБОЙ MinIO (А)"
+                             action="#{testFlagsManager.enableMinioFailure}"
+                             update="@form:msgs"
+                             style="background-color: #f44336; color: white;"/>
+
+            <p:commandButton value="СБОЙ DB (B)"
+                             action="#{testFlagsManager.enableDBFailure}"
+                             update="@form:msgs"
+                             style="background-color: #f44336; color: white;"/>
+
+            <p:commandButton value="СБОЙ ЛОГИКИ (С)"
+                             action="#{testFlagsManager.enableMidLogicFailure}"
+                             update="@form:msgs"
+                             style="background-color: #f44336; color: white;"/>
+
+            <p:commandButton value="СБРОСИТЬ ВСЕ ФЛАГИ"
+                             action="#{testFlagsManager.resetAllFlags}"
+                             update="@form:msgs"
+                             style="background-color: #4CAF50; color: white;"/>
+
+        </p:panelGrid>
+
+        <p><b>Текущий режим сбоя:</b>
+            <h:outputText value="#{testFlagsManager.currentStatus}" style="font-weight: bold; color: #{testFlagsManager.currentStatus eq 'ОК' ? 'green' : 'red'};"/>
+        </p>
+        <p:separator/>
+
         <h2>Управление Импортом</h2>
 
         <p:panelGrid columns="3" style="margin-bottom: 10px;">
