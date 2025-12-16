@@ -1,10 +1,11 @@
 package organization.repository;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import lombok.NoArgsConstructor;
+import organization.config.CacheLog; // Наша новая аннотация
 import organization.entity.Address;
 import organization.entity.Organization;
 import organization.entity.OrganizationType;
@@ -15,24 +16,22 @@ import java.util.List;
 @NoArgsConstructor
 public class OrganizationRepository {
 
-    @PersistenceContext(unitName = "organizationPU")
+    // ВАЖНО: Используем @Inject, чтобы получить EM из нашего EntityManagerProducer (DBCP2)
+    @Inject
     private EntityManager em;
 
-
-    public Organization create(Organization organization) {
+    public void create(Organization organization) {
         em.persist(organization);
         em.flush();
-        return organization;
     }
 
     public void delete(Organization organization) {
-        if (organization == null) {
-            return;
+        if (organization != null) {
+            if (!em.contains(organization)) {
+                organization = em.merge(organization);
+            }
+            em.remove(organization);
         }
-        if (!em.contains(organization)) {
-            organization = em.merge(organization);
-        }
-        em.remove(organization);
     }
 
     public void deleteById(Long id) {
@@ -46,6 +45,8 @@ public class OrganizationRepository {
         em.merge(organization);
     }
 
+    // ВАЖНО: Вешаем интерцептор для статистики кэша сюда
+    @CacheLog
     public Organization findById(Long id) {
         return em.find(Organization.class, id);
     }
@@ -63,16 +64,12 @@ public class OrganizationRepository {
 
         if (zip == null || zip.isBlank()) {
             return em.createQuery(
-                            "SELECT COUNT(o) FROM Organization o WHERE o.postalAddress.street = :street",
-                            Long.class
-                    )
+                            "SELECT COUNT(o) FROM Organization o WHERE o.postalAddress.street = :street", Long.class)
                     .setParameter("street", street)
                     .getSingleResult();
         } else {
             return em.createQuery(
-                            "SELECT COUNT(o) FROM Organization o WHERE o.postalAddress.street = :street AND o.postalAddress.zipCode = :zip",
-                            Long.class
-                    )
+                            "SELECT COUNT(o) FROM Organization o WHERE o.postalAddress.street = :street AND o.postalAddress.zipCode = :zip", Long.class)
                     .setParameter("street", street)
                     .setParameter("zip", zip)
                     .getSingleResult();
@@ -86,8 +83,6 @@ public class OrganizationRepository {
     }
 
     public List<Organization> findAll() {
-        TypedQuery<Organization> query = em.createQuery(
-                "SELECT o FROM Organization o", Organization.class);
-        return query.getResultList();
+        return em.createQuery("SELECT o FROM Organization o", Organization.class).getResultList();
     }
 }

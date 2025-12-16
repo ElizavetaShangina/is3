@@ -6,14 +6,19 @@ import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.StreamedContent;
 import org.primefaces.model.file.UploadedFile;
+import organization.config.CacheLoggingInterceptor;
 import organization.entity.ImportOperation;
 import organization.entity.User;
 import organization.repository.ImportOperationRepository;
 import organization.repository.UserRepository;
+import organization.service.MinioService;
 import organization.service.ObjectImportService;
 import organization.service.UserService;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.List;
@@ -24,116 +29,107 @@ public class ImportManagerBean implements Serializable {
 
     @Inject
     private ObjectImportService importService;
-
     @Inject
     private UserRepository userRepository;
-
     @Inject
     private UserService userService;
-
     @Inject
     private ImportOperationRepository historyRepository;
+    @Inject
+    private MinioService minioService;
 
     private String username;
     private UploadedFile uploadedFile;
-
     private List<ImportOperation> importHistory;
     private boolean isAdmin = false;
+    private boolean cacheLogEnabled = true; // Для чекбокса
 
     @PostConstruct
     public void init() {
         userService.setupTestUsers();
+        this.cacheLogEnabled = CacheLoggingInterceptor.enabled;
     }
 
-    public void loadHistory() {
-        if (username == null || username.trim().isEmpty()) {
+    // Метод для переключения логов кэша
+    public void toggleCacheLog() {
+        CacheLoggingInterceptor.enabled = this.cacheLogEnabled;
+        String status = this.cacheLogEnabled ? "Enabled" : "Disabled";
+        FacesContext.getCurrentInstance().addMessage(null,
+                new FacesMessage(FacesMessage.SEVERITY_INFO, "Cache Log", "L2 Cache Statistics " + status));
+    }
+
+    // Метод для скачивания файла
+    public StreamedContent downloadFile(ImportOperation operation) {
+        if (operation.getMinioObjectName() == null) {
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_WARN, "Error", "Enter user's name."));
-            importHistory = List.of();
-            return;
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "File not found in storage"));
+            return null;
         }
-
-        User currentUser = userRepository.findByUsername(username).orElse(null);
-        if (currentUser == null) {
+        try {
+            InputStream stream = minioService.downloadFile(operation.getMinioObjectName());
+            return DefaultStreamedContent.builder()
+                    .name("import_" + operation.getId() + ".csv")
+                    .contentType("text/csv")
+                    .stream(() -> stream)
+                    .build();
+        } catch (Exception e) {
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "User wasn't found."));
-            importHistory = List.of();
-            return;
-        }
-
-        this.isAdmin = currentUser.isAdmin();
-
-        if (this.isAdmin) {
-            this.importHistory = historyRepository.findAll();
-        } else {
-            this.importHistory = historyRepository.findByUser(currentUser);
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Download Error", e.getMessage()));
+            return null;
         }
     }
 
     public void upload() {
-        if (uploadedFile == null || uploadedFile.getFileName() == null || uploadedFile.getFileName().isEmpty() || uploadedFile.getSize() == 0 || username == null || username.trim().isEmpty()) {
+        if (uploadedFile == null || uploadedFile.getSize() == 0 || username == null || username.trim().isEmpty()) {
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_WARN, "Error", "Choose file and enter user's name."));
+                    new FacesMessage(FacesMessage.SEVERITY_WARN, "Error", "Choose file and enter username."));
             return;
         }
 
-        try (InputStream is = uploadedFile.getInputStream()) {
+        try {
             User currentUser = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new IllegalArgumentException("User doesn't found."));
+                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-            importService.performImport(is, currentUser);
+            // Читаем контент в массив байтов, чтобы передать и в MinIO, и в парсер
+            byte[] content = uploadedFile.getContent();
+
+            // Вызываем метод с 2PC транзакцией
+            importService.performImport(content, currentUser, uploadedFile.getFileName());
 
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Success", "Import successfully run."));
-
-            loadHistory();
-
+                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Success", "Import completed successfully."));
         } catch (Exception e) {
-            // 1. Получаем чистое сообщение
-            String cleanMessage = getRootErrorMessage(e);
-
-            // 2. ВАЖНО: Передаем именно cleanMessage, а не e.getMessage()
+            String msg = getRootErrorMessage(e);
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Import error", cleanMessage));
-
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Import Error", msg));
+        } finally {
             loadHistory();
         }
-        // finally не нужен, так как loadHistory() вызывается в обоих блоках try/catch корректно
+    }
+
+    // ... loadHistory и getRootErrorMessage (оставить как были) ...
+    public void loadHistory() {
+        if (username == null || username.trim().isEmpty()) return;
+        User u = userRepository.findByUsername(username).orElse(null);
+        if (u != null) {
+            this.isAdmin = u.isAdmin();
+            this.importHistory = isAdmin ? historyRepository.findAll() : historyRepository.findByUser(u);
+        }
     }
 
     private String getRootErrorMessage(Throwable e) {
         Throwable root = e;
-        while (root.getCause() != null) {
-            root = root.getCause();
-        }
-
-        String msg = root.getMessage();
-
-        if (msg == null) {
-            return "An internal server error has occurred";
-        }
-
-        if (msg.startsWith("Import error: ")) {
-            msg = msg.substring("Import error: ".length());
-        }
-
-        if (msg.startsWith("java.lang.RuntimeException: ")) {
-            msg = msg.substring("java.lang.RuntimeException: ".length());
-        }
-
-
-        if (msg.contains("Organization with Name") && msg.contains("already exists")) {
-            return "Unique violation: An organization with this name and type already exists. Please check the CSV file for duplicates.";
-        }
-
-        return msg;
+        while(root.getCause() != null) root = root.getCause();
+        return root.getMessage();
     }
 
-    // Геттеры и сеттеры
+    // Геттеры/Сеттеры
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     public UploadedFile getUploadedFile() { return uploadedFile; }
     public void setUploadedFile(UploadedFile uploadedFile) { this.uploadedFile = uploadedFile; }
     public List<ImportOperation> getImportHistory() { return importHistory; }
     public boolean isAdmin() { return isAdmin; }
+    public boolean isCacheLogEnabled() { return cacheLogEnabled; }
+    public void setCacheLogEnabled(boolean cacheLogEnabled) { this.cacheLogEnabled = cacheLogEnabled; }
 }

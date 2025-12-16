@@ -1,11 +1,14 @@
 package organization.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import java.time.ZonedDateTime;
 import java.io.Serializable;
 
 @Entity
 @Table(name = "import_operation")
+@Getter @Setter
 public class ImportOperation implements Serializable {
 
     @Id
@@ -32,18 +35,7 @@ public class ImportOperation implements Serializable {
     @Column(name = "error_message", length = 4096)
     private String errorMessage;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-    public ImportStatus getStatus() { return status; }
-    public void setStatus(ImportStatus status) { this.status = status; }
-    public ZonedDateTime getStartTime() { return startTime; }
-    public void setStartTime(ZonedDateTime startTime) { this.startTime = startTime; }
-    public ZonedDateTime getEndTime() { return endTime; }
-    public void setEndTime(ZonedDateTime endTime) { this.endTime = endTime; }
-    public Integer getAddedObjectsCount() { return addedObjectsCount; }
-    public void setAddedObjectsCount(Integer addedObjectsCount) { this.addedObjectsCount = addedObjectsCount; }
-    public String getErrorMessage() { return errorMessage; }
-    public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
+    // НОВОЕ ПОЛЕ: Имя файла в MinIO
+    @Column(name = "minio_object_name")
+    private String minioObjectName;
 }
