@@ -1,8 +1,10 @@
 package organization.service;
 
 import jakarta.ejb.*;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.ToString;
 import organization.entity.ImportOperation;
 import organization.entity.ImportStatus;
 import organization.entity.User;
@@ -13,7 +15,7 @@ import java.time.ZonedDateTime;
 @TransactionManagement(TransactionManagementType.CONTAINER)
 public class ImportHistoryService {
 
-    @PersistenceContext
+    @Inject
     private EntityManager em;
 
     // REQUIRES_NEW: Останавливает текущую транзакцию, открывает новую,

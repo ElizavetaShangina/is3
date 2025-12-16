@@ -1,6 +1,7 @@
 package organization.repository;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import organization.entity.ImportOperation;
@@ -11,7 +12,7 @@ import java.util.List;
 @ApplicationScoped
 public class ImportOperationRepository {
 
-    @PersistenceContext
+    @Inject
     private EntityManager em;
 
     // Найти все операции (для админа)

@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # Файловое хранилище (S3)
+  minio:
+    image: minio/minio
+    container_name: lab3-minio
+    ports:
+      - "9000:9000"  # API порт
+      - "9001:9001"  # Консоль админа
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  # База данных (Локальная)
+  postgres:
+    image: postgres:15
+    container_name: lab3-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: studs           # Как в EntityManagerProducer
+      POSTGRES_USER: s408391       # Как в EntityManagerProducer
+      POSTGRES_PASSWORD: 1gaLfGH4bkg4oTgg # Как в EntityManagerProducer
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  minio_data:
+  pg_data:

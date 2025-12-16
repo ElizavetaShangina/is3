@@ -3,6 +3,7 @@ package organization.service;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import organization.entity.User;
@@ -11,7 +12,7 @@ import java.util.List;
 @Stateless
 public class UserService {
 
-    @PersistenceContext
+    @Inject
     private EntityManager em;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)

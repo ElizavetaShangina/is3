@@ -1,6 +1,7 @@
 package organization.repository;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
@@ -12,7 +13,7 @@ import java.util.Optional;
 @ApplicationScoped
 public class UserRepository {
 
-    @PersistenceContext
+    @Inject
     private EntityManager em;
 
     public Optional<User> findByUsername(String username) {

@@ -24,7 +24,7 @@ public class EntityManagerProducer {
         dataSource.setDriverClassName("org.postgresql.Driver");
         dataSource.setUrl("jdbc:postgresql://localhost:5432/studs"); // Твои настройки
         dataSource.setUsername("s408391"); // Твой логин
-        dataSource.setPassword("your_password"); // Твой пароль (лучше вынести в ENV)
+        dataSource.setPassword("1gaLfGH4bkg4oTgg"); // Твой пароль (лучше вынести в ENV)
 
         // Параметры пула (для отчета)
         dataSource.setInitialSize(5);
